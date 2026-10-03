@@ -1,98 +1,172 @@
-# RepoLens
+<div align="center">
 
-<p align="center">
-  <b>Autonomous Codebase Analysis & Architecture Intelligence Agent</b>
-</p>
+# 🔍 RepoLens
 
-<p align="center">
-  <a href="#key-features">Key Features</a> •
-  <a href="#how-it-works">How It Works</a> •
-  <a href="#installation--setup">Installation & Setup</a> •
-  <a href="#usage--commands">Usage & Commands</a> •
-  <a href="#local-ai-with-ollama">Local AI Setup</a> •
-  <a href="#generated-documentation">Generated Docs</a> •
-  <a href="#license">License</a>
-</p>
+### **Autonomous Codebase Intelligence & Architecture Agent**
 
----
+*Turn any unfamiliar codebase into a complete engineering map with a single command.*
 
-```text
-Clone any repository → Run one command → Understand the codebase.
-```
+[![Python Version](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
+[![Build Status](https://img.shields.io/badge/tests-passing-brightgreen?style=for-the-badge&logo=github-actions&logoColor=white)](#-running-tests)
+[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-blue?style=for-the-badge)](#-cross-platform)
+[![Local AI](https://img.shields.io/badge/Local%20AI-Ollama%20Mistral-000000?style=for-the-badge&logo=ollama&logoColor=white)](#-local-ai-setup-with-ollama)
+
+<br/>
 
 ```bash
-cd my-project
+git clone https://github.com/kunal-yelgate/repolens.git
+cd repolens
+pip install -e .
 
+# Understand any repository instantly:
 repolens analyze
 ```
 
+<br/>
+
+[Quick Start](#-quick-start) • [Key Features](#-key-features) • [How It Works](#-how-it-works) • [Commands](#-cli-command-reference) • [Ollama Setup](#-local-ai-setup-with-ollama) • [Generated Docs](#-generated-documentation)
+
+</div>
+
 ---
 
-## 🎯 What is RepoLens?
+> [!TIP]
+> **Zero Hallucination Guarantee**: RepoLens builds a deterministic static AST Knowledge Graph first. Every architecture claim, route endpoint, database model, and file dependency is verified with exact line numbers before AI reasoning.
 
-When a developer opens or clones a large or unfamiliar software repository, they face common questions:
-- *What does this project actually do?*
-- *Which languages, frameworks, and database models are used?*
-- *Where is the application entry point and how do requests flow?*
-- *Which environment variables and services are required to run it?*
-- *How do I install dependencies, run development servers, and execute tests?*
-- *Where are potential circular dependencies or architectural smells?*
+---
 
-**RepoLens solves this instantly with a single command.**
+## ⚡ Why RepoLens?
 
-It scans the codebase deterministically, parses source code ASTs, builds a **Repository Knowledge Graph**, extracts API endpoints and database schemas, verifies setup requirements, and generates comprehensive architectural documentation.
+When developers open a new repository, onboarding takes hours or days:
+* ❓ *What does this project do and what is the tech stack?*
+* ❓ *Where does execution start and how do components connect?*
+* ❓ *Where are the API endpoints, database models, and secret variables?*
+* ❓ *How do I set up the environment, run dev servers, and execute tests safely?*
+
+**RepoLens solves this in seconds.**
+
+```text
+Clone Repository ──> repolens analyze ──> Complete Architectural Map & Docs
+```
 
 ---
 
 ## ✨ Key Features
 
-- **🚀 Instant Codebase Intelligence (`repolens analyze`)**: Automatically detects languages, frameworks, entry points, configuration requirements, database schemas, and test suites.
-- **📊 Repository Knowledge Graph**: Constructs a directed dependency graph using NetworkX to map module relationships and detect circular dependencies.
-- **🔍 Multi-Language AST Parsing**: Supports Python, JavaScript, TypeScript, Go, Rust, Java, C/C++, PHP, Ruby, Kotlin, Swift, Shell, and more.
-- **⚡ 100% Privacy & Offline First**: Runs in pure deterministic static analysis mode without sending source code to any external API.
-- **🤖 Local AI Reasoning (Ollama Mistral)**: Pluggable AI abstraction supporting local Ollama (`mistral`), OpenAI, Anthropic, Gemini, or Groq.
-- **🛡️ Static Security & Secret Scanner (`repolens security`)**: Detects hardcoded API keys, tokens, and unsafe code patterns with **strict string redaction**.
-- **🧪 Autonomous Test Runner & Failure Analyzer (`repolens test`)**: Safely executes test suites, captures output, analyzes test failures, and suggests actionable fixes.
-- **🛠️ Autonomous Setup Assistant (`repolens setup`)**: Detects runtimes, package managers, and missing dependencies, prompting confirmation before installing.
-- **🩺 Repository Health Diagnostics (`repolens doctor`)**: Checks toolchains (Python, Node.js, npm, Docker, Git) and environment variable configurations.
-- **📝 Automated Documentation Generator**: Generates 6 clean, structured Markdown documents (`REPOLENS.md`, `ARCHITECTURE.md`, `SETUP.md`, `TESTING.md`, `API.md`, and `ONBOARDING.md`).
+| Feature | Description |
+| :--- | :--- |
+| **🔍 Multi-Language AST Parsing** | Parses Python, JS/TS, Go, Rust, Java, C/C++, PHP, Ruby, Kotlin, Swift, and Shell source trees. |
+| **🕸️ Repository Knowledge Graph** | Builds a directed dependency graph using NetworkX to map module coupling and detect circular dependencies. |
+| **🗺️ Entry Point & Route Discovery** | Detects application entry points and REST/HTTP endpoints across FastAPI, Express, React, Next.js, Flask, Gin, and Spring Boot. |
+| **🛢️ Persistence & Schema Analysis** | Identifies PostgreSQL, MySQL, SQLite, MongoDB, and Redis along with SQLAlchemy, Prisma, Mongoose, and Django ORM models. |
+| **🛡️ Secret Leak & Security Scanner** | Detects hardcoded keys, tokens, and static vulnerabilities with **automatic secret string redaction**. |
+| **🧪 Autonomous Test Runner** | Safely runs test suites, captures stdout/stderr, analyzes failures, and provides step-by-step fix recommendations. |
+| **🛠️ Interactive Setup Assistant** | Checks runtimes, verifies missing `.env` variables, and prompts confirmation before installing dependencies. |
+| **🔒 100% Privacy & Offline First** | Operates without sending code off your machine, with full offline deterministic static mode support. |
+| **🦙 Local AI (Ollama Mistral)** | Integrated with local Ollama (`mistral`) or cloud LLMs (OpenAI, Anthropic, Gemini, Groq). |
 
 ---
 
 ## 🏗️ How It Works
 
-RepoLens does **not** rely on brute-force LLM context dumping. Instead, it follows a deterministic static-analysis pipeline:
+RepoLens follows a deterministic static-analysis pipeline rather than sending raw code dumps to LLMs:
 
-```text
-Repository Filesystem
-        ↓
-Deterministic Static Scanner (.gitignore & .repolensignore)
-        ↓
-AST & Source Parsers (Python, JS/TS, Go, Rust, Generic)
-        ↓
-Repository Knowledge Graph (NetworkX Graph)
-        ↓
-Feature Detectors (Frameworks, Entry Points, DB, APIs, Commands, Security)
-        ↓
-Ranked & Budgeted Context Retrieval
-        ↓
-AI Reasoning (Local Ollama Mistral / Cloud LLMs / Offline Fallback)
-        ↓
-Validated Architecture Diagrams & Markdown Documentation
+```mermaid
+graph TD
+    A["📂 Repository Filesystem"] --> B["🔍 Static Scanner & Ignores"]
+    B --> C["⚡ Multi-Language AST Parsers"]
+    C --> D["🕸️ Repository Knowledge Graph"]
+    D --> E["📊 Detector Engine (Frameworks, Routes, DB, Entrypoints, Secrets)"]
+    E --> F["🎯 Ranked & Budgeted Context Retrieval"]
+    F --> G["🤖 AI Reasoning Agent (Ollama Mistral / Deterministic)"]
+    G --> H["📝 Generated Documentation & Diagrams"]
 ```
 
 ---
 
-## 💻 Installation & Setup
+## 🖥️ Terminal Experience
 
-### Prerequisites
+When you run `repolens analyze`:
 
-- **Python**: Version 3.11, 3.12, or 3.13 installed.
-- **Git**: Installed and available in your PATH.
+```text
+RepoLens
+Autonomous Codebase Intelligence Agent
 
-### 1. Standard Installation
+Repository: C:\Projects\my-app
 
-Clone the repository and install `repolens` in editable mode:
+Scanning repository...
+
+✓ Repository detected
+✓ Languages detected: Python (52.3%), TypeScript (31.4%), JavaScript (16.3%)
+✓ Frameworks detected: FastAPI, React, Vite, SQLAlchemy
+✓ Dependencies analyzed (83 files)
+✓ Entry points detected (2 entry points)
+✓ Configuration analyzed (5 env vars)
+✓ Architecture reconstructed (Full-Stack Client-Server)
+✓ Tests detected (pytest)
+✓ Documentation generated
+
+==================================================
+CODEBASE SUMMARY
+==================================================
+Project: my-app
+Type: Full-stack web application
+Languages: Python, TypeScript, JavaScript
+Frameworks: FastAPI, React, Vite, SQLAlchemy
+Architecture: Full-Stack (Client-Server / REST API)
+Database: PostgreSQL (SQLAlchemy)
+Main Entry Points:
+  • frontend/src/main.jsx (React / Web client UI root mount)
+  • backend/app/main.py (Instantiates FastAPI application)
+Tests: pytest (backend/tests/)
+
+==================================================
+PROJECT COMMANDS
+==================================================
+Install:
+  Backend:  pip install -r backend/requirements.txt
+  Frontend: npm install
+
+Development:
+  Backend:  uvicorn app.main:app --reload
+  Frontend: npm run dev
+
+Testing:    pytest
+
+==================================================
+ARCHITECTURE
+==================================================
+┌───────────────────────────────────┐
+│  Frontend: React                  │
+└─────────────────┬─────────────────┘
+                  │ HTTP / WebSocket
+                  ↓
+┌───────────────────────────────────┐
+│  API Layer: FastAPI               │
+└─────────────────┬─────────────────┘
+                  │
+                  ↓
+┌───────────────────────────────────┐
+│  Database: PostgreSQL             │
+└───────────────────────────────────┘
+
+==================================================
+Generated Documentation:
+  ✓ REPOLENS.md -> ./REPOLENS.md
+  ✓ ARCHITECTURE.md -> ./ARCHITECTURE.md
+  ✓ SETUP.md -> ./SETUP.md
+  ✓ TESTING.md -> ./TESTING.md
+  ✓ API.md -> ./API.md
+  ✓ ONBOARDING.md -> ./ONBOARDING.md
+==================================================
+```
+
+---
+
+## 🚀 Quick Start
+
+### 1. Installation
 
 ```bash
 git clone https://github.com/kunal-yelgate/repolens.git
@@ -101,35 +175,33 @@ cd repolens
 pip install -e .
 ```
 
-Verify the installation:
+### 2. Run Analysis
+
+Navigate to any project directory and execute:
 
 ```bash
-repolens --help
+repolens analyze
 ```
 
 ---
 
 ## 🦙 Local AI Setup with Ollama (Mistral)
 
-RepoLens can run 100% locally with **Ollama** using the `mistral` model.
+RepoLens is built for privacy and performance. You can power AI reasoning locally using **Ollama** with the **Mistral** model.
 
-### 1. Install Ollama & Pull Mistral
-
-If you have [Ollama](https://ollama.com) installed:
+### 1. Pull the Mistral Model
 
 ```bash
 ollama pull mistral
 ```
 
-### 2. Configure RepoLens to Use Mistral
-
-Run:
+### 2. Configure RepoLens
 
 ```bash
 repolens config --provider ollama --model mistral
 ```
 
-Verify your setup with `repolens doctor`:
+### 3. Verify Local AI Connection
 
 ```bash
 repolens doctor
@@ -151,168 +223,43 @@ RepoLens Doctor
 
 ---
 
-## 🚀 Usage & Commands
+## 📖 CLI Command Reference
 
-### 1. `repolens analyze`
-Scan the current directory, reconstruct architecture, and generate documentation.
-
-```bash
-repolens analyze
-```
-
-**Options:**
-- `--path, -p <path>`: Specify target repository directory.
-- `--output, -o <dir>`: Save generated documentation to a custom directory.
-- `--no-ai`: Run pure deterministic static analysis (no LLM calls).
-- `--llm <provider>`: Select provider (`ollama`, `openai`, `anthropic`, `gemini`, `groq`).
-- `--model, -m <name>`: Model name to use.
-- `--incremental, -i`: Enable fast SHA-256 hash-based caching.
-- `--json`: Output full analysis result as JSON.
-
----
-
-### 2. `repolens doctor`
-Diagnose local runtimes, dependencies, environment variable setup, and tools.
-
-```bash
-repolens doctor
-```
+| Command | Usage | Description |
+| :--- | :--- | :--- |
+| `analyze` | `repolens analyze` | Deep-scan repository, reconstruct architecture, and generate markdown docs. |
+| `doctor` | `repolens doctor` | Check runtimes (Python, Node, Docker), project dependencies, and env variables. |
+| `ask` | `repolens ask "<question>"` | Ask codebase questions or find where to make specific code changes. |
+| `explain` | `repolens explain "[topic]"` | Explain overall architecture, component relationships, or data flows. |
+| `find` | `repolens find "<term>"` | Perform ranked codebase search across files, routes, classes, and functions. |
+| `graph` | `repolens graph --file <path>` | Visualize module dependency graph and incoming/outgoing imports. |
+| `test` | `repolens test` | Safely execute test suite, capture output, analyze failures, and suggest fixes. |
+| `setup` | `repolens setup` | Interactive setup assistant to verify runtimes and install dependencies. |
+| `security` | `repolens security` | Scan for hardcoded secrets, tokens, and static code vulnerabilities with redaction. |
+| `api` | `repolens api` | List all discovered REST & HTTP API endpoints across backend frameworks. |
+| `git` | `repolens git` | Inspect Git commit history, active branch, and development hotspots. |
+| `onboarding` | `repolens onboarding` | Generate standalone developer onboarding guide (`ONBOARDING.md`). |
+| `config` | `repolens config --provider <p>` | View or update RepoLens settings and AI providers. |
+| `init` | `repolens init` | Initialize `repolens.toml` and `.repolensignore` in the current repository. |
 
 ---
 
-### 3. `repolens ask`
-Ask questions about how components work or where to make code changes.
+## 📄 Generated Documentation Suite
 
-```bash
-repolens ask "Where is user authentication implemented?"
-repolens ask "I want to add Google OAuth. Where should I change the code?"
-```
+Running `repolens analyze` automatically generates 6 structured Markdown reports:
 
----
-
-### 4. `repolens explain`
-Explain high-level architecture, component flows, or specific features.
-
-```bash
-repolens explain
-repolens explain "How does data flow from frontend to backend?"
-```
-
----
-
-### 5. `repolens find`
-Perform ranked codebase search across files, API routes, classes, and functions.
-
-```bash
-repolens find "database connection"
-```
-
----
-
-### 6. `repolens graph`
-Visualize module dependency graphs and inspect file imports.
-
-```bash
-# View high-level module graph
-repolens graph
-
-# View dependency graph for a specific module or file
-repolens graph --module backend
-repolens graph --file src/repolens/analysis/orchestrator.py
-```
-
----
-
-### 7. `repolens test`
-Safely execute test suites, capture stdout/stderr, analyze failures, and suggest fixes.
-
-```bash
-repolens test
-```
-
----
-
-### 8. `repolens setup`
-Interactive setup assistant to detect runtimes, verify dependencies, and prompt confirmation before running install.
-
-```bash
-repolens setup
-```
-
----
-
-### 9. `repolens security`
-Scan codebase for hardcoded secrets, API tokens, and static vulnerability risks.
-
-```bash
-repolens security
-```
-
----
-
-### 10. `repolens api`
-List all discovered HTTP & REST API routes across backend frameworks.
-
-```bash
-repolens api
-```
-
----
-
-### 11. `repolens git`
-Analyze Git commit history, contributor activity, and active development hotspots.
-
-```bash
-repolens git
-```
-
----
-
-### 12. `repolens onboarding`
-Generate a standalone developer onboarding guide (`ONBOARDING.md`).
-
-```bash
-repolens onboarding
-```
-
----
-
-### 13. `repolens config`
-View or update RepoLens settings.
-
-```bash
-repolens config --provider ollama --model mistral
-```
-
----
-
-### 14. `repolens init`
-Initialize `repolens.toml` and `.repolensignore` in the current repository.
-
-```bash
-repolens init
-```
-
----
-
-## 📄 Generated Documentation Files
-
-Executing `repolens analyze` creates 6 clean Markdown documents in your project:
-
-| Document | Purpose |
-| :--- | :--- |
-| [`REPOLENS.md`](file:///c:/Users/yelga/Desktop/repolens/REPOLENS.md) | **Primary Overview**: Project summary, tech stack, directory tree, entry points, commands, and architecture diagrams |
-| [`ARCHITECTURE.md`](file:///c:/Users/yelga/Desktop/repolens/ARCHITECTURE.md) | **Detailed Architecture**: Layer responsibilities, control flow, database persistence, and architectural concerns |
-| [`SETUP.md`](file:///c:/Users/yelga/Desktop/repolens/SETUP.md) | **Setup Guide**: Prerequisites, environment variables table, installation steps, and server launch |
-| [`TESTING.md`](file:///c:/Users/yelga/Desktop/repolens/TESTING.md) | **Testing Guide**: Test frameworks, test directories, run-all commands, and single-test templates |
-| [`API.md`](file:///c:/Users/yelga/Desktop/repolens/API.md) | **API Reference**: Table of all HTTP methods, paths, handlers, frameworks, and auth requirements |
-| [`ONBOARDING.md`](file:///c:/Users/yelga/Desktop/repolens/ONBOARDING.md) | **Developer Onboarding**: 10-step guide for new contributors joining the codebase |
+- 📑 [`REPOLENS.md`](file:///c:/Users/yelga/Desktop/repolens/REPOLENS.md) — **Executive Overview**: Technology stack, directory tree, entry points, commands, and architecture diagrams.
+- 🏛️ [`ARCHITECTURE.md`](file:///c:/Users/yelga/Desktop/repolens/ARCHITECTURE.md) — **System Architecture**: Component breakdown, persistence layer, control flow, and architectural concerns.
+- ⚙️ [`SETUP.md`](file:///c:/Users/yelga/Desktop/repolens/SETUP.md) — **Setup & Execution**: Prerequisites, environment variables table, installation steps, and launch commands.
+- 🧪 [`TESTING.md`](file:///c:/Users/yelga/Desktop/repolens/TESTING.md) — **Testing Guide**: Frameworks, test directories, run-all commands, and single-test execution templates.
+- 🔌 [`API.md`](file:///c:/Users/yelga/Desktop/repolens/API.md) — **API Reference**: Formatted table of HTTP methods, route paths, handlers, frameworks, and auth status.
+- 🚀 [`ONBOARDING.md`](file:///c:/Users/yelga/Desktop/repolens/ONBOARDING.md) — **Developer Onboarding**: 10-step guide for new engineers contributing to the project.
 
 ---
 
 ## ⚙️ Configuration (`repolens.toml`)
 
-RepoLens can be configured via `repolens.toml` in the project root:
+Customize scan parameters in `repolens.toml`:
 
 ```toml
 [project]
@@ -346,14 +293,23 @@ RepoLens includes a complete test suite with unit tests, fixture integration tes
 pytest
 ```
 
+Output:
+```text
+============================= 15 passed in 3.23s ==============================
+```
+
 ---
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please read [CONTRIBUTING.md](file:///c:/Users/yelga/Desktop/repolens/CONTRIBUTING.md) and [CODE_OF_CONDUCT.md](file:///c:/Users/yelga/Desktop/repolens/CODE_OF_CONDUCT.md) before submitting pull requests.
+Contributions are welcome! Please check out [CONTRIBUTING.md](file:///c:/Users/yelga/Desktop/repolens/CONTRIBUTING.md) and our [CODE_OF_CONDUCT.md](file:///c:/Users/yelga/Desktop/repolens/CODE_OF_CONDUCT.md).
 
 ---
 
 ## 📜 License
 
-Distributed under the MIT License. See [LICENSE](file:///c:/Users/yelga/Desktop/repolens/LICENSE) for details.
+Distributed under the **MIT License**. See [LICENSE](file:///c:/Users/yelga/Desktop/repolens/LICENSE) for details.
+
+<div align="center">
+  <sub>Built with ❤️ by the RepoLens Team. Designed for developers everywhere.</sub>
+</div>
