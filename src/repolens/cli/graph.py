@@ -1,7 +1,7 @@
 """Dependency graph CLI command."""
 
 from pathlib import Path
-from typing import Optional
+from typing import Annotated, Any, Optional
 import typer
 
 from repolens.analysis.orchestrator import AnalysisOrchestrator
@@ -10,13 +10,24 @@ from repolens.graph.dependency import DependencyGraphAnalyzer
 from repolens.utils.logging import console, setup_logging
 
 
+def _unwrap(val: Any) -> Any:
+    if val is not None and type(val).__name__ in {"OptionInfo", "ArgumentInfo"}:
+        return getattr(val, "default", None)
+    return val
+
+
 def run_graph_cmd(
-    module: Optional[str] = typer.Option(None, "--module", "-m", help="Filter graph by module name"),
-    file_path: Optional[str] = typer.Option(None, "--file", "-f", help="Inspect import dependencies for a specific file"),
-    path: Path = typer.Option(Path("."), "--path", "-p", help="Path to repository"),
-    verbose: bool = typer.Option(False, "--verbose", "-v", help="Verbose output"),
+    module: Annotated[Optional[str], typer.Option("--module", "-m", help="Filter graph by module name")] = None,
+    file_path: Annotated[Optional[str], typer.Option("--file", "-f", help="Inspect import dependencies for a specific file")] = None,
+    path: Annotated[Path, typer.Option("--path", "-p", help="Path to repository")] = Path("."),
+    verbose: Annotated[bool, typer.Option("--verbose", "-v", help="Verbose output")] = False,
 ) -> None:
     """Visualize module relationships and source file dependencies."""
+    module = _unwrap(module)
+    file_path = _unwrap(file_path)
+    path = _unwrap(path) or Path(".")
+    verbose = bool(_unwrap(verbose))
+
     setup_logging(verbose=verbose)
     config = load_config(root_dir=path)
 

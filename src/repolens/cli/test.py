@@ -1,7 +1,7 @@
 """Autonomous test validation CLI command."""
 
 from pathlib import Path
-from typing import Optional
+from typing import Annotated, Any, Optional
 import typer
 
 from repolens.analysis.orchestrator import AnalysisOrchestrator
@@ -10,13 +10,24 @@ from repolens.utils.logging import console, setup_logging
 from repolens.validation.runner import ValidationRunner
 
 
+def _unwrap(val: Any) -> Any:
+    if val is not None and type(val).__name__ in {"OptionInfo", "ArgumentInfo"}:
+        return getattr(val, "default", None)
+    return val
+
+
 def run_test_cmd(
-    path: Path = typer.Option(Path("."), "--path", "-p", help="Path to repository"),
-    command: Optional[str] = typer.Option(None, "--command", "-c", help="Override test command to execute"),
-    timeout: int = typer.Option(120, "--timeout", "-t", help="Timeout in seconds"),
-    verbose: bool = typer.Option(False, "--verbose", "-v", help="Verbose output"),
+    path: Annotated[Path, typer.Option("--path", "-p", help="Path to repository")] = Path("."),
+    command: Annotated[Optional[str], typer.Option("--command", "-c", help="Override test command to execute")] = None,
+    timeout: Annotated[int, typer.Option("--timeout", "-t", help="Timeout in seconds")] = 120,
+    verbose: Annotated[bool, typer.Option("--verbose", "-v", help="Verbose output")] = False,
 ) -> None:
     """Safely execute tests, analyze failures, and suggest fixes."""
+    path = _unwrap(path) or Path(".")
+    command = _unwrap(command)
+    timeout = int(_unwrap(timeout) or 120)
+    verbose = bool(_unwrap(verbose))
+
     setup_logging(verbose=verbose)
     config = load_config(root_dir=path)
     target_root = config.project.root.resolve()

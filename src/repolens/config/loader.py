@@ -20,6 +20,12 @@ from repolens.config.models import (
 )
 
 
+def _unwrap_val(val: Any) -> Any:
+    if val is not None and type(val).__name__ == "OptionInfo":
+        return getattr(val, "default", None)
+    return val
+
+
 def load_config(
     root_dir: Optional[Path] = None,
     config_file: Optional[Path] = None,
@@ -29,6 +35,7 @@ def load_config(
     Load RepoLens configuration from file, environment variables, and CLI overrides.
     Priority: CLI Overrides > Environment Variables > Config File > Defaults
     """
+    root_dir = _unwrap_val(root_dir)
     root = (root_dir or Path.cwd()).resolve()
     config_data: Dict[str, Any] = {}
 
@@ -91,20 +98,23 @@ def load_config(
 
     # Apply CLI overrides if present
     if cli_overrides:
-        if "output_dir" in cli_overrides and cli_overrides["output_dir"]:
-            output_dict["directory"] = Path(cli_overrides["output_dir"])
-        if "format" in cli_overrides and cli_overrides["format"]:
-            output_dict["format"] = cli_overrides["format"]
-        if "no_ai" in cli_overrides and cli_overrides["no_ai"]:
+        clean_overrides = {k: _unwrap_val(v) for k, v in cli_overrides.items()}
+        out_dir = clean_overrides.get("output_dir")
+        if out_dir is not None:
+            output_dict["directory"] = Path(out_dir)
+        fmt = clean_overrides.get("format")
+        if fmt is not None:
+            output_dict["format"] = fmt
+        if clean_overrides.get("no_ai"):
             ai_dict["provider"] = "none"
-        elif "provider" in cli_overrides and cli_overrides["provider"]:
-            ai_dict["provider"] = cli_overrides["provider"]
-        if "model" in cli_overrides and cli_overrides["model"]:
-            ai_dict["model"] = cli_overrides["model"]
-        if "incremental" in cli_overrides and cli_overrides["incremental"] is not None:
-            analysis_dict["incremental"] = cli_overrides["incremental"]
-        if "depth" in cli_overrides and cli_overrides["depth"] is not None:
-            analysis_dict["max_depth"] = cli_overrides["depth"]
+        elif clean_overrides.get("provider"):
+            ai_dict["provider"] = clean_overrides["provider"]
+        if clean_overrides.get("model"):
+            ai_dict["model"] = clean_overrides["model"]
+        if clean_overrides.get("incremental") is not None:
+            analysis_dict["incremental"] = clean_overrides["incremental"]
+        if clean_overrides.get("depth") is not None:
+            analysis_dict["max_depth"] = clean_overrides["depth"]
 
     project = ProjectConfig(**project_dict)
     analysis = AnalysisConfig(**analysis_dict)

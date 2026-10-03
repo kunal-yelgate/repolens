@@ -4,7 +4,7 @@ import os
 import shutil
 import sys
 from pathlib import Path
-from typing import Optional
+from typing import Annotated, Any, Optional
 import typer
 from rich.panel import Panel
 
@@ -16,11 +16,20 @@ from repolens.utils.logging import console, setup_logging
 from repolens.utils.subprocess import SafeCommandRunner
 
 
+def _unwrap(val: Any) -> Any:
+    if val is not None and type(val).__name__ in {"OptionInfo", "ArgumentInfo"}:
+        return getattr(val, "default", None)
+    return val
+
+
 def run_doctor(
-    path: Path = typer.Option(Path("."), "--path", "-p", help="Path to repository"),
-    verbose: bool = typer.Option(False, "--verbose", "-v", help="Verbose output"),
+    path: Annotated[Path, typer.Option("--path", "-p", help="Path to repository")] = Path("."),
+    verbose: Annotated[bool, typer.Option("--verbose", "-v", help="Verbose output")] = False,
 ) -> None:
     """Diagnose repository environment, dependencies, toolchains, and configurations."""
+    path = _unwrap(path) or Path(".")
+    verbose = bool(_unwrap(verbose))
+
     setup_logging(verbose=verbose)
     config = load_config(root_dir=path)
     runner = SafeCommandRunner()

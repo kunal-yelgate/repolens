@@ -2,7 +2,7 @@
 
 import shutil
 from pathlib import Path
-from typing import Optional
+from typing import Annotated, Any, Optional
 import typer
 
 from repolens.analysis.orchestrator import AnalysisOrchestrator
@@ -11,12 +11,22 @@ from repolens.utils.logging import console, setup_logging
 from repolens.utils.subprocess import SafeCommandRunner
 
 
+def _unwrap(val: Any) -> Any:
+    if val is not None and type(val).__name__ in {"OptionInfo", "ArgumentInfo"}:
+        return getattr(val, "default", None)
+    return val
+
+
 def run_setup_cmd(
-    path: Path = typer.Option(Path("."), "--path", "-p", help="Path to repository"),
-    auto_approve: bool = typer.Option(False, "--yes", "-y", help="Automatically confirm dependency installation"),
-    verbose: bool = typer.Option(False, "--verbose", "-v", help="Verbose output"),
+    path: Annotated[Path, typer.Option("--path", "-p", help="Path to repository")] = Path("."),
+    auto_approve: Annotated[bool, typer.Option("--yes", "-y", help="Automatically confirm dependency installation")] = False,
+    verbose: Annotated[bool, typer.Option("--verbose", "-v", help="Verbose output")] = False,
 ) -> None:
     """Autonomous setup assistant to prepare and configure dependencies."""
+    path = _unwrap(path) or Path(".")
+    auto_approve = bool(_unwrap(auto_approve))
+    verbose = bool(_unwrap(verbose))
+
     setup_logging(verbose=verbose)
     config = load_config(root_dir=path)
     target_root = config.project.root.resolve()

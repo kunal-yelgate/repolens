@@ -5,8 +5,8 @@
 ## 1. Project Overview
 - **Project Name**: `repolens`
 - **Type**: CLI tool
-- **Files**: 95 files (6546 total lines of code)
-- **Version Control**: Non-git directory
+- **Files**: 96 files (7096 total lines of code)
+- **Git Branch**: `main`
 
 ## 2. Technology Stack
 ### Languages
@@ -20,8 +20,6 @@
 ## 3. Repository Structure
 ```text
 repolens/
-├── .repopilot/
-│   ├── index.json
 ├── docs/
 │   ├── ai.md
 │   ├── architecture.md
@@ -35,10 +33,10 @@ repolens/
 │   │   ├── test_fixtures.py
 │   │   ├── test_self_analysis.py
 │   ├── unit/
+│   │   ├── test_cli.py
 │   │   ├── test_detectors.py
 │   │   ├── test_ignore.py
-│   │   ├── test_knowledge_graph.py
-│   │   └── ... (3 more files)
+│   │   └── ... (4 more files)
 ├── pyproject.toml
 ├── repolens.toml
 ├── API.md
@@ -47,10 +45,11 @@ repolens/
 ├── CONTRIBUTING.md
 ├── README.md
 ├── SETUP.md
+├── .gitignore
 ├── CODE_OF_CONDUCT.md
 ├── LICENSE
 ├── ONBOARDING.md
-├── REPOPILOT.md
+├── REPOLENS.md
 ├── SECURITY.md
 └── TESTING.md
 ```
@@ -72,16 +71,16 @@ repolens/
 
 ## 5. Main Entry Points
 - `pyproject.toml`: Declared console script 'repolens' in pyproject.toml *(Confidence: 95%)*
-- `src/repolens/detectors/entrypoint.py`: Instantiates FastAPI application *(Confidence: 95%)*
-- `tests/integration/test_fixtures.py`: Instantiates FastAPI application *(Confidence: 95%)*
 - `tests/unit/test_parsers.py`: Instantiates FastAPI application *(Confidence: 95%)*
 - `tests/unit/test_detectors.py`: Instantiates FastAPI application *(Confidence: 95%)*
+- `tests/integration/test_fixtures.py`: Instantiates FastAPI application *(Confidence: 95%)*
+- `src/repolens/detectors/entrypoint.py`: Instantiates FastAPI application *(Confidence: 95%)*
 - `src/repolens/cli/main.py`: Python executable block (if __name__ == '__main__':) *(Confidence: 85%)*
 
 ## 6. Database & Persistence
 - **Technology**: `Relational Database (SQL)`
-- **ORM**: `ORM`
-- **Models / Schemas**: `DiscoveredEndpoint`, `EntryPointInfo`, `LLMResponse`, `AnalysisConfig`, `ParsedFunction`, `ArchitectureFinding`, `ValidationReport`, `SecurityFinding`, `EnvVarInfo`, `RepoLensConfig`, `SecurityConfig`, `FindingEvidence`, `GraphNode`, `DirectoryMetadata`, `ConfidenceScore`
+- **ORM**: `Ecto`
+- **Models / Schemas**: `LLMResponse`, `RepositoryInfo`, `AgentResponse`, `DiscoveredEndpoint`, `SecurityConfig`, `SecurityFinding`, `GraphNode`, `ProjectConfig`, `TestFailureItem`, `CICDInfo`, `EntryPointInfo`, `DirectoryMetadata`, `MonorepoInfo`, `EvidenceRecord`, `FindingEvidence`
 
 ## 7. Environment Variables
 - `ANTHROPIC_API_KEY` (Required) — Used by: `src/repolens/ai/factory.py`, `src/repolens/config/loader.py`
@@ -94,6 +93,8 @@ repolens/
 - `REPOLENS_LLM_PROVIDER` (Required) — Used by: `src/repolens/config/loader.py`
 - `REPOLENS_MODEL` (Required) — Used by: `src/repolens/config/loader.py`
 - `REPOLENS_PROVIDER` (Required) — Used by: `src/repolens/config/loader.py`
+- `no_ai` (Required) — Used by: `src/repolens/config/loader.py`
+- `output_dir` (Required) — Used by: `src/repolens/config/loader.py`
 
 ## 8. Setup & Development Commands
 ### Install Dependencies
@@ -133,4 +134,4 @@ graph TD
 ```
 
 ---
-*Analysis generated on 2026-10-03 23:36:21*
+*Analysis generated on 2026-10-04 01:15:43*

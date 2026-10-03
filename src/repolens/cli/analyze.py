@@ -2,7 +2,7 @@
 
 import json
 from pathlib import Path
-from typing import Optional
+from typing import Annotated, Any, Optional
 import typer
 from rich.panel import Panel
 from rich.table import Table
@@ -14,20 +14,38 @@ from repolens.documentation.generator import DocumentationGenerator
 from repolens.utils.logging import console, setup_logging
 
 
+def _unwrap(val: Any) -> Any:
+    if val is not None and type(val).__name__ == "OptionInfo":
+        return getattr(val, "default", None)
+    return val
+
+
 def run_analyze(
-    path: Path = typer.Option(Path("."), "--path", "-p", help="Path to repository"),
-    output: Optional[Path] = typer.Option(None, "--output", "-o", help="Directory to save generated docs"),
-    format_opt: str = typer.Option("terminal", "--format", "-f", help="Output format: terminal, json, markdown"),
-    no_ai: bool = typer.Option(False, "--no-ai", help="Disable AI reasoning and run deterministic static analysis only"),
-    llm: Optional[str] = typer.Option(None, "--llm", help="AI provider (ollama, openai, anthropic, gemini, groq)"),
-    model: Optional[str] = typer.Option(None, "--model", "-m", help="Model name to use"),
-    depth: int = typer.Option(15, "--depth", "-d", help="Maximum directory traversal depth"),
-    incremental: bool = typer.Option(False, "--incremental", "-i", help="Enable incremental caching"),
-    json_output: bool = typer.Option(False, "--json", help="Output results as JSON"),
-    verbose: bool = typer.Option(False, "--verbose", "-v", help="Show verbose debug logs"),
-    force: bool = typer.Option(False, "--force", help="Force re-generation"),
+    path: Annotated[Path, typer.Option("--path", "-p", help="Path to repository")] = Path("."),
+    output: Annotated[Optional[Path], typer.Option("--output", "-o", help="Directory to save generated docs")] = None,
+    format_opt: Annotated[str, typer.Option("--format", "-f", help="Output format: terminal, json, markdown")] = "terminal",
+    no_ai: Annotated[bool, typer.Option("--no-ai", help="Disable AI reasoning and run deterministic static analysis only")] = False,
+    llm: Annotated[Optional[str], typer.Option("--llm", help="AI provider (ollama, openai, anthropic, gemini, groq)")] = None,
+    model: Annotated[Optional[str], typer.Option("--model", "-m", help="Model name to use")] = None,
+    depth: Annotated[int, typer.Option("--depth", "-d", help="Maximum directory traversal depth")] = 15,
+    incremental: Annotated[bool, typer.Option("--incremental", "-i", help="Enable incremental caching")] = False,
+    json_output: Annotated[bool, typer.Option("--json", help="Output results as JSON")] = False,
+    verbose: Annotated[bool, typer.Option("--verbose", "-v", help="Show verbose debug logs")] = False,
+    force: Annotated[bool, typer.Option("--force", help="Force re-generation")] = False,
 ) -> None:
     """Analyze a software repository and generate architectural intelligence & documentation."""
+    path = _unwrap(path) or Path(".")
+    output = _unwrap(output)
+    format_opt = _unwrap(format_opt) or "terminal"
+    no_ai = bool(_unwrap(no_ai))
+    llm = _unwrap(llm)
+    model = _unwrap(model)
+    depth = int(_unwrap(depth) or 15)
+    incremental = bool(_unwrap(incremental))
+    json_output = bool(_unwrap(json_output))
+    verbose = bool(_unwrap(verbose))
+    force = bool(_unwrap(force))
+
     setup_logging(verbose=verbose)
 
     cli_overrides = {

@@ -92,9 +92,46 @@ RUST_FRAMEWORK_MAP: Dict[str, str] = {
     "clap": "Clap",
 }
 
+PHP_FRAMEWORK_MAP: Dict[str, str] = {
+    "laravel/framework": "Laravel",
+    "symfony/symfony": "Symfony",
+    "yiisoft/yii2": "Yii",
+    "codeigniter4/framework": "CodeIgniter",
+    "cakephp/cakephp": "CakePHP",
+    "slim/slim": "Slim",
+}
+
+RUBY_FRAMEWORK_MAP: Dict[str, str] = {
+    "rails": "Ruby on Rails",
+    "sinatra": "Sinatra",
+    "hanami": "Hanami",
+    "sidekiq": "Sidekiq",
+}
+
+CSHARP_FRAMEWORK_MAP: Dict[str, str] = {
+    "microsoft.aspnetcore": "ASP.NET Core",
+    "entityframeworkcore": "Entity Framework Core",
+    "entityframework": "Entity Framework",
+    "dapper": "Dapper",
+    "microsoft.maui": "MAUI",
+}
+
+DART_FRAMEWORK_MAP: Dict[str, str] = {
+    "flutter": "Flutter",
+    "get": "GetX",
+    "provider": "Provider",
+    "flutter_bloc": "Bloc",
+}
+
+ELIXIR_FRAMEWORK_MAP: Dict[str, str] = {
+    "phoenix": "Phoenix",
+    "ecto": "Ecto",
+    "absinthe": "Absinthe",
+}
+
 
 class FrameworkDetector(BaseDetector):
-    """Detects frameworks by analyzing manifests (package.json, requirements.txt, pyproject.toml, etc.) and source imports."""
+    """Detects frameworks by analyzing manifests (package.json, requirements.txt, pyproject.toml, composer.json, etc.) and source imports."""
 
     def detect(
         self,
@@ -103,9 +140,11 @@ class FrameworkDetector(BaseDetector):
     ) -> List[str]:
         frameworks: Set[str] = set()
 
-        # 1. Inspect package.json manifests
+        # 1. Inspect manifests
         for path_str, fmeta in inventory.files.items():
-            if fmeta.filename.lower() == "package.json":
+            fname_lower = fmeta.filename.lower()
+
+            if fname_lower == "package.json":
                 content = read_file_safely(fmeta.full_path)
                 if content:
                     try:
@@ -124,8 +163,8 @@ class FrameworkDetector(BaseDetector):
                     except Exception:
                         pass
 
-            # 2. Inspect Python requirements / pyproject / Pipfile
-            elif fmeta.filename.lower() in {"requirements.txt", "requirements-dev.txt", "pipfile", "pyproject.toml"}:
+            # 2. Python requirements / pyproject / Pipfile
+            elif fname_lower in {"requirements.txt", "requirements-dev.txt", "pipfile", "pyproject.toml"}:
                 content = read_file_safely(fmeta.full_path)
                 if content:
                     for line in content.splitlines():
@@ -136,32 +175,82 @@ class FrameworkDetector(BaseDetector):
                                 if k == pkg_name or f'"{k}"' in cleaned or f"'{k}'" in cleaned or k in pkg_name:
                                     frameworks.add(v)
 
-            # 3. Inspect Go mod
-            elif fmeta.filename.lower() == "go.mod":
+            # 3. Go mod
+            elif fname_lower == "go.mod":
                 content = read_file_safely(fmeta.full_path)
                 if content:
                     for k, v in GO_FRAMEWORK_MAP.items():
                         if k in content:
                             frameworks.add(v)
 
-            # 4. Inspect Cargo.toml
-            elif fmeta.filename.lower() == "cargo.toml":
+            # 4. Cargo.toml
+            elif fname_lower == "cargo.toml":
                 content = read_file_safely(fmeta.full_path)
                 if content:
                     for k, v in RUST_FRAMEWORK_MAP.items():
                         if k in content:
                             frameworks.add(v)
 
-            # 5. Inspect Java pom.xml / build.gradle
-            elif fmeta.filename.lower() in {"pom.xml", "build.gradle", "build.gradle.kts"}:
+            # 5. Java pom.xml / build.gradle
+            elif fname_lower in {"pom.xml", "build.gradle", "build.gradle.kts"}:
                 content = read_file_safely(fmeta.full_path)
                 if content:
-                    if "spring-boot" in content.lower():
+                    content_lower = content.lower()
+                    if "spring-boot" in content_lower:
                         frameworks.add("Spring Boot")
-                    elif "org.springframework" in content:
+                    elif "org.springframework" in content_lower:
                         frameworks.add("Spring")
+                    if "quarkus" in content_lower:
+                        frameworks.add("Quarkus")
+                    if "micronaut" in content_lower:
+                        frameworks.add("Micronaut")
 
-        # 6. Check parsed routes and imports
+            # 6. PHP composer.json
+            elif fname_lower == "composer.json":
+                content = read_file_safely(fmeta.full_path)
+                if content:
+                    content_lower = content.lower()
+                    for k, v in PHP_FRAMEWORK_MAP.items():
+                        if k in content_lower:
+                            frameworks.add(v)
+
+            # 7. Ruby Gemfile
+            elif fname_lower in {"gemfile", "gemfile.lock"}:
+                content = read_file_safely(fmeta.full_path)
+                if content:
+                    content_lower = content.lower()
+                    for k, v in RUBY_FRAMEWORK_MAP.items():
+                        if k in content_lower:
+                            frameworks.add(v)
+
+            # 8. C# .csproj
+            elif fname_lower.endswith(".csproj") or fname_lower == "packages.config":
+                content = read_file_safely(fmeta.full_path)
+                if content:
+                    content_lower = content.lower()
+                    for k, v in CSHARP_FRAMEWORK_MAP.items():
+                        if k in content_lower:
+                            frameworks.add(v)
+
+            # 9. Dart pubspec.yaml
+            elif fname_lower == "pubspec.yaml":
+                content = read_file_safely(fmeta.full_path)
+                if content:
+                    content_lower = content.lower()
+                    for k, v in DART_FRAMEWORK_MAP.items():
+                        if k in content_lower:
+                            frameworks.add(v)
+
+            # 10. Elixir mix.exs
+            elif fname_lower == "mix.exs":
+                content = read_file_safely(fmeta.full_path)
+                if content:
+                    content_lower = content.lower()
+                    for k, v in ELIXIR_FRAMEWORK_MAP.items():
+                        if k in content_lower:
+                            frameworks.add(v)
+
+        # 11. Check parsed routes and imports
         for parsed in parsed_sources.values():
             for route in parsed.routes:
                 if route.framework and route.framework != "unknown":

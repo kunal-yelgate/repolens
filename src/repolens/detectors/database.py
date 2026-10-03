@@ -36,6 +36,15 @@ ORM_KEYWORDS = {
     "gorm": "Gorm",
     "diesel": "Diesel",
     "sea-orm": "SeaORM",
+    "hibernate": "Hibernate",
+    "persistence": "JPA / Hibernate",
+    "mybatis": "MyBatis",
+    "entityframework": "Entity Framework Core",
+    "dapper": "Dapper",
+    "eloquent": "Eloquent ORM",
+    "doctrine": "Doctrine ORM",
+    "activerecord": "ActiveRecord",
+    "ecto": "Ecto",
 }
 
 

@@ -1,7 +1,7 @@
 # Developer Onboarding Guide — repolens
 
 ## 1. What this project does
-**repolens** is a **CLI tool** with 95 files and 6546 lines of code.
+**repolens** is a **CLI tool** with 96 files and 7096 lines of code.
 
 ## 2. Technology Stack
 - **Python**: 100.0%
@@ -10,8 +10,6 @@
 ## 3. Repository Structure
 ```text
 repolens/
-├── .repopilot/
-│   ├── index.json
 ├── docs/
 │   ├── ai.md
 │   ├── architecture.md
@@ -25,10 +23,10 @@ repolens/
 │   │   ├── test_fixtures.py
 │   │   ├── test_self_analysis.py
 │   ├── unit/
+│   │   ├── test_cli.py
 │   │   ├── test_detectors.py
 │   │   ├── test_ignore.py
-│   │   ├── test_knowledge_graph.py
-│   │   └── ... (3 more files)
+│   │   └── ... (4 more files)
 ├── pyproject.toml
 ├── repolens.toml
 ├── API.md
@@ -37,20 +35,21 @@ repolens/
 ├── CONTRIBUTING.md
 ├── README.md
 ├── SETUP.md
+├── .gitignore
 ├── CODE_OF_CONDUCT.md
 ├── LICENSE
 ├── ONBOARDING.md
-├── REPOPILOT.md
+├── REPOLENS.md
 ├── SECURITY.md
 └── TESTING.md
 ```
 
 ## 4. How the Application Starts (Entry Points)
 - `pyproject.toml`: Declared console script 'repolens' in pyproject.toml
-- `src/repolens/detectors/entrypoint.py`: Instantiates FastAPI application
-- `tests/integration/test_fixtures.py`: Instantiates FastAPI application
 - `tests/unit/test_parsers.py`: Instantiates FastAPI application
 - `tests/unit/test_detectors.py`: Instantiates FastAPI application
+- `tests/integration/test_fixtures.py`: Instantiates FastAPI application
+- `src/repolens/detectors/entrypoint.py`: Instantiates FastAPI application
 - `src/repolens/cli/main.py`: Python executable block (if __name__ == '__main__':)
 
 ## 5. Architecture & Data Flow

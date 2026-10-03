@@ -1,7 +1,7 @@
 """Codebase Q&A, explain, and find CLI commands."""
 
 from pathlib import Path
-from typing import Optional
+from typing import Annotated, Any, Optional
 import typer
 
 from repolens.agents.architecture import ArchitectureAgent
@@ -13,13 +13,24 @@ from repolens.config.loader import load_config
 from repolens.utils.logging import console, setup_logging
 
 
+def _unwrap(val: Any) -> Any:
+    if val is not None and type(val).__name__ in {"OptionInfo", "ArgumentInfo"}:
+        return getattr(val, "default", None)
+    return val
+
+
 def run_ask_cmd(
-    question: str = typer.Argument(..., help="Question to ask about the codebase"),
-    path: Path = typer.Option(Path("."), "--path", "-p", help="Path to repository"),
-    no_ai: bool = typer.Option(False, "--no-ai", help="Run deterministic search and analysis without AI provider"),
-    verbose: bool = typer.Option(False, "--verbose", "-v", help="Verbose output"),
+    question: Annotated[str, typer.Argument(help="Question to ask about the codebase")],
+    path: Annotated[Path, typer.Option("--path", "-p", help="Path to repository")] = Path("."),
+    no_ai: Annotated[bool, typer.Option("--no-ai", help="Run deterministic search and analysis without AI provider")] = False,
+    verbose: Annotated[bool, typer.Option("--verbose", "-v", help="Verbose output")] = False,
 ) -> None:
     """Ask questions about how components work or where to make code changes."""
+    question = str(_unwrap(question) or "")
+    path = _unwrap(path) or Path(".")
+    no_ai = bool(_unwrap(no_ai))
+    verbose = bool(_unwrap(verbose))
+
     setup_logging(verbose=verbose)
     config = load_config(root_dir=path, cli_overrides={"no_ai": no_ai})
 
@@ -41,12 +52,17 @@ def run_ask_cmd(
 
 
 def run_explain_cmd(
-    topic: Optional[str] = typer.Argument(None, help="Specific feature or topic to explain (default: full architecture)"),
-    path: Path = typer.Option(Path("."), "--path", "-p", help="Path to repository"),
-    no_ai: bool = typer.Option(False, "--no-ai", help="Deterministic static mode"),
-    verbose: bool = typer.Option(False, "--verbose", "-v", help="Verbose output"),
+    topic: Annotated[Optional[str], typer.Argument(help="Specific feature or topic to explain (default: full architecture)")] = None,
+    path: Annotated[Path, typer.Option("--path", "-p", help="Path to repository")] = Path("."),
+    no_ai: Annotated[bool, typer.Option("--no-ai", help="Deterministic static mode")] = False,
+    verbose: Annotated[bool, typer.Option("--verbose", "-v", help="Verbose output")] = False,
 ) -> None:
     """Explain codebase architecture, component flows, or specific features."""
+    topic = _unwrap(topic)
+    path = _unwrap(path) or Path(".")
+    no_ai = bool(_unwrap(no_ai))
+    verbose = bool(_unwrap(verbose))
+
     setup_logging(verbose=verbose)
     config = load_config(root_dir=path, cli_overrides={"no_ai": no_ai})
 
@@ -63,12 +79,17 @@ def run_explain_cmd(
 
 
 def run_find_cmd(
-    term: str = typer.Argument(..., help="Search query (file, module, endpoint, symbol)"),
-    path: Path = typer.Option(Path("."), "--path", "-p", help="Path to repository"),
-    top_k: int = typer.Option(10, "--top", "-k", help="Number of results to return"),
-    verbose: bool = typer.Option(False, "--verbose", "-v", help="Verbose output"),
+    term: Annotated[str, typer.Argument(help="Search query (file, module, endpoint, symbol)")],
+    path: Annotated[Path, typer.Option("--path", "-p", help="Path to repository")] = Path("."),
+    top_k: Annotated[int, typer.Option("--top", "-k", help="Number of results to return")] = 10,
+    verbose: Annotated[bool, typer.Option("--verbose", "-v", help="Verbose output")] = False,
 ) -> None:
     """Ranked codebase search across files, routes, classes, and functions."""
+    term = str(_unwrap(term) or "")
+    path = _unwrap(path) or Path(".")
+    top_k = int(_unwrap(top_k) or 10)
+    verbose = bool(_unwrap(verbose))
+
     setup_logging(verbose=verbose)
     config = load_config(root_dir=path)
 

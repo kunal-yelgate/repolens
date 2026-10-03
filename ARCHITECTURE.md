@@ -30,16 +30,16 @@ graph TD
 
 ## 3. Entry Points & Control Flow
 - **`pyproject.toml`** (cli): Declared console script 'repolens' in pyproject.toml
-- **`src/repolens/detectors/entrypoint.py`** (web_application): Instantiates FastAPI application
-- **`tests/integration/test_fixtures.py`** (web_application): Instantiates FastAPI application
 - **`tests/unit/test_parsers.py`** (web_application): Instantiates FastAPI application
 - **`tests/unit/test_detectors.py`** (web_application): Instantiates FastAPI application
+- **`tests/integration/test_fixtures.py`** (web_application): Instantiates FastAPI application
+- **`src/repolens/detectors/entrypoint.py`** (web_application): Instantiates FastAPI application
 - **`src/repolens/cli/main.py`** (executable_script): Python executable block (if __name__ == '__main__':)
 
 ## 4. Persistence Architecture
 - **Engine**: `Relational Database (SQL)`
-- **ORM/Driver**: `ORM`
-- **Entities**: DiscoveredEndpoint, EntryPointInfo, LLMResponse, AnalysisConfig, ParsedFunction, ArchitectureFinding, ValidationReport, SecurityFinding, EnvVarInfo, RepoLensConfig, SecurityConfig, FindingEvidence, GraphNode, DirectoryMetadata, ConfidenceScore, MonorepoInfo, AIConfig, EvidenceRecord, OutputConfig, SearchResult, ProjectCommandsInfo, AgentResponse, CICDInfo, ParsedImport, ProjectConfig, ArchitecturalConcern, ParsedClass, ParsedSource, StructuredCodebaseContext, DatabaseInfo
+- **ORM/Driver**: `Ecto`
+- **Entities**: LLMResponse, RepositoryInfo, AgentResponse, DiscoveredEndpoint, SecurityConfig, SecurityFinding, GraphNode, ProjectConfig, TestFailureItem, CICDInfo, EntryPointInfo, DirectoryMetadata, MonorepoInfo, EvidenceRecord, FindingEvidence, ParsedSource, RepositoryInventory, ParsedClass, GraphEdge, ArchitecturalConcern, architecture, FileMetadata, ArchitectureFinding, AnalysisResult, EnvVarInfo, supporting, ParsedRoute, TestFrameworkInfo, ProjectCommandsInfo, OutputConfig
 
 ## 5. Potential Architectural Concerns & Smells
 - No major architectural violations detected.

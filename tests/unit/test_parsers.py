@@ -89,3 +89,36 @@ func main() {
     assert parsed.routes[0].path == "/ping"
     assert "DB_HOST" in parsed.env_vars
     assert len(parsed.classes) == 1
+
+
+def test_generic_parser(tmp_path: Path) -> None:
+    from repolens.parsers.generic import GenericParser
+
+    code = '''package com.example.app;
+import java.util.List;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+public class UserController {
+    @GetMapping("/api/users")
+    public List<String> getUsers() {
+        String dbPass = System.getenv("DB_PASSWORD");
+        return List.of();
+    }
+}
+'''
+    java_file = tmp_path / "UserController.java"
+    parser = GenericParser()
+    assert parser.can_parse(java_file)
+
+    parsed = parser.parse(java_file, code, "UserController.java")
+    assert parsed.language == "Java"
+    assert len(parsed.routes) == 1
+    assert parsed.routes[0].path == "/api/users"
+    assert parsed.routes[0].http_method == "GET"
+    assert "DB_PASSWORD" in parsed.env_vars
+    assert len(parsed.classes) == 1
+    assert parsed.classes[0].name == "UserController"
+    assert any(fn.name == "getUsers" for fn in parsed.functions)
+

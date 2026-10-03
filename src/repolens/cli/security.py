@@ -1,7 +1,7 @@
 """Security, API, Git, Config, and Onboarding CLI commands."""
 
 from pathlib import Path
-from typing import Optional
+from typing import Annotated, Any, Optional
 import typer
 from rich.table import Table
 
@@ -12,11 +12,20 @@ from repolens.utils.filesystem import safe_write_text
 from repolens.utils.logging import console, setup_logging
 
 
+def _unwrap(val: Any) -> Any:
+    if val is not None and type(val).__name__ in {"OptionInfo", "ArgumentInfo"}:
+        return getattr(val, "default", None)
+    return val
+
+
 def run_security_cmd(
-    path: Path = typer.Option(Path("."), "--path", "-p", help="Path to repository"),
-    verbose: bool = typer.Option(False, "--verbose", "-v", help="Verbose output"),
+    path: Annotated[Path, typer.Option("--path", "-p", help="Path to repository")] = Path("."),
+    verbose: Annotated[bool, typer.Option("--verbose", "-v", help="Verbose output")] = False,
 ) -> None:
     """Run static security checks and secret leak detection."""
+    path = _unwrap(path) or Path(".")
+    verbose = bool(_unwrap(verbose))
+
     setup_logging(verbose=verbose)
     config = load_config(root_dir=path)
 
@@ -48,10 +57,13 @@ def run_security_cmd(
 
 
 def run_api_cmd(
-    path: Path = typer.Option(Path("."), "--path", "-p", help="Path to repository"),
-    verbose: bool = typer.Option(False, "--verbose", "-v", help="Verbose output"),
+    path: Annotated[Path, typer.Option("--path", "-p", help="Path to repository")] = Path("."),
+    verbose: Annotated[bool, typer.Option("--verbose", "-v", help="Verbose output")] = False,
 ) -> None:
     """List detected API routes, methods, frameworks, and auth requirements."""
+    path = _unwrap(path) or Path(".")
+    verbose = bool(_unwrap(verbose))
+
     setup_logging(verbose=verbose)
     config = load_config(root_dir=path)
 
@@ -88,10 +100,13 @@ def run_api_cmd(
 
 
 def run_git_cmd(
-    path: Path = typer.Option(Path("."), "--path", "-p", help="Path to repository"),
-    verbose: bool = typer.Option(False, "--verbose", "-v", help="Verbose output"),
+    path: Annotated[Path, typer.Option("--path", "-p", help="Path to repository")] = Path("."),
+    verbose: Annotated[bool, typer.Option("--verbose", "-v", help="Verbose output")] = False,
 ) -> None:
     """Analyze Git repository history and active development areas."""
+    path = _unwrap(path) or Path(".")
+    verbose = bool(_unwrap(verbose))
+
     setup_logging(verbose=verbose)
     config = load_config(root_dir=path)
     target_root = config.project.root.resolve()
@@ -135,11 +150,15 @@ def run_git_cmd(
 
 
 def run_config_cmd(
-    provider: Optional[str] = typer.Option(None, "--provider", help="Set default AI provider (ollama, openai, etc.)"),
-    model: Optional[str] = typer.Option(None, "--model", help="Set default model name"),
-    path: Path = typer.Option(Path("."), "--path", "-p", help="Path to repository"),
+    provider: Annotated[Optional[str], typer.Option("--provider", help="Set default AI provider (ollama, openai, etc.)")] = None,
+    model: Annotated[Optional[str], typer.Option("--model", help="Set default model name")] = None,
+    path: Annotated[Path, typer.Option("--path", "-p", help="Path to repository")] = Path("."),
 ) -> None:
     """View or configure RepoLens settings."""
+    provider = _unwrap(provider)
+    model = _unwrap(model)
+    path = _unwrap(path) or Path(".")
+
     config_file = path / "repolens.toml"
 
     if provider or model:
@@ -170,11 +189,15 @@ scan_secrets = true
 
 
 def run_onboarding_cmd(
-    path: Path = typer.Option(Path("."), "--path", "-p", help="Path to repository"),
-    output: Optional[Path] = typer.Option(None, "--output", "-o", help="Output directory"),
-    verbose: bool = typer.Option(False, "--verbose", "-v", help="Verbose output"),
+    path: Annotated[Path, typer.Option("--path", "-p", help="Path to repository")] = Path("."),
+    output: Annotated[Optional[Path], typer.Option("--output", "-o", help="Output directory")] = None,
+    verbose: Annotated[bool, typer.Option("--verbose", "-v", help="Verbose output")] = False,
 ) -> None:
     """Generate developer onboarding guide (ONBOARDING.md)."""
+    path = _unwrap(path) or Path(".")
+    output = _unwrap(output)
+    verbose = bool(_unwrap(verbose))
+
     setup_logging(verbose=verbose)
     config = load_config(root_dir=path)
 

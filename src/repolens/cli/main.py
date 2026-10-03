@@ -44,10 +44,19 @@ app.command(name="config", help="View or update RepoLens configuration.")(run_co
 app.command(name="onboarding", help="Generate developer onboarding guide (ONBOARDING.md).")(run_onboarding_cmd)
 
 
+from typing import Annotated, Any, Optional
+
+def _unwrap(val: Any) -> Any:
+    if val is not None and type(val).__name__ in {"OptionInfo", "ArgumentInfo"}:
+        return getattr(val, "default", None)
+    return val
+
+
 @app.command(name="init", help="Initialize repolens.toml and .repolensignore in the current repository.")
 def run_init(
-    path: Path = typer.Option(Path("."), "--path", "-p", help="Directory to initialize"),
+    path: Annotated[Path, typer.Option("--path", "-p", help="Directory to initialize")] = Path("."),
 ) -> None:
+    path = _unwrap(path) or Path(".")
     target_dir = path.resolve()
     cfg_file = target_dir / "repolens.toml"
     ignore_file = target_dir / ".repolensignore"
@@ -88,9 +97,10 @@ coverage/
 @app.callback(invoke_without_command=True)
 def main(
     ctx: typer.Context,
-    version: Optional[bool] = typer.Option(None, "--version", "-V", help="Show version"),
+    version: Annotated[Optional[bool], typer.Option("--version", "-V", help="Show version")] = None,
 ) -> None:
     """RepoLens — Autonomous Codebase Intelligence Agent."""
+    version = bool(_unwrap(version))
     if version:
         from repolens import __version__
         console.print(f"RepoLens version: {__version__}")
@@ -111,23 +121,23 @@ def main(
 
         choice = typer.prompt("Select an option (1-8)", default="1")
         if choice == "1":
-            run_analyze(Path("."))
+            run_analyze(path=Path("."))
         elif choice == "2":
-            run_explain_cmd(None, Path("."))
+            run_explain_cmd(topic=None, path=Path("."))
         elif choice == "3":
             q = typer.prompt("Enter your question")
-            run_ask_cmd(q, Path("."))
+            run_ask_cmd(question=q, path=Path("."))
         elif choice == "4":
             t = typer.prompt("Enter search term")
-            run_find_cmd(t, Path("."))
+            run_find_cmd(term=t, path=Path("."))
         elif choice == "5":
-            run_test_cmd(Path("."))
+            run_test_cmd(path=Path("."))
         elif choice == "6":
-            run_doctor(Path("."))
+            run_doctor(path=Path("."))
         elif choice == "7":
-            run_security_cmd(Path("."))
+            run_security_cmd(path=Path("."))
         elif choice == "8":
-            run_analyze(Path("."))
+            run_analyze(path=Path("."), format_opt="markdown")
 
 
 if __name__ == "__main__":

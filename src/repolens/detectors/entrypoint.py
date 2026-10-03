@@ -176,7 +176,92 @@ class EntryPointDetector(BaseDetector):
                     )
                     seen_files.add(rel_path)
 
-            # Python if __name__ == "__main__":
+            # Java / Kotlin main
+            elif rel_path.endswith((".java", ".kt")):
+                if "public static void main" in content or "@SpringBootApplication" in content or "fun main(" in content:
+                    reason_str = "Spring Boot Application" if "@SpringBootApplication" in content else "Java/Kotlin main method"
+                    entry_points.append(
+                        EntryPointInfo(
+                            file=rel_path,
+                            type="application",
+                            confidence=0.95,
+                            reason=reason_str,
+                            evidence=[f"Found entry point in {rel_path}"],
+                        )
+                    )
+                    seen_files.add(rel_path)
+
+            # C / C++ main
+            elif rel_path.endswith((".c", ".cpp", ".cc", ".cxx")):
+                if "int main(" in content or "void main(" in content:
+                    entry_points.append(
+                        EntryPointInfo(
+                            file=rel_path,
+                            type="application",
+                            confidence=0.95,
+                            reason="C/C++ main entry function",
+                            evidence=[f"main() found in {rel_path}"],
+                        )
+                    )
+                    seen_files.add(rel_path)
+
+            # C# main
+            elif rel_path.endswith(".cs"):
+                if "static void Main(" in content or "static async Task Main(" in content or fname_lower == "program.cs":
+                    entry_points.append(
+                        EntryPointInfo(
+                            file=rel_path,
+                            type="application",
+                            confidence=0.95,
+                            reason="C# Main entry point",
+                            evidence=[f"Main method found in {rel_path}"],
+                        )
+                    )
+                    seen_files.add(rel_path)
+
+            # PHP entrypoints
+            elif rel_path.endswith(".php"):
+                if fname_lower in {"index.php", "artisan", "server.php"}:
+                    entry_points.append(
+                        EntryPointInfo(
+                            file=rel_path,
+                            type="web_application" if fname_lower != "artisan" else "cli",
+                            confidence=0.90,
+                            reason=f"PHP entrypoint script ({fname_lower})",
+                            evidence=[f"PHP script {rel_path}"],
+                        )
+                    )
+                    seen_files.add(rel_path)
+
+            # Ruby entrypoints
+            elif rel_path.endswith(".rb") or fname_lower == "config.ru":
+                if fname_lower in {"config.ru", "environment.rb", "application.rb"} or rel_path.startswith("bin/"):
+                    entry_points.append(
+                        EntryPointInfo(
+                            file=rel_path,
+                            type="application",
+                            confidence=0.90,
+                            reason=f"Ruby / Rails application entry ({fname_lower})",
+                            evidence=[f"Ruby entry {rel_path}"],
+                        )
+                    )
+                    seen_files.add(rel_path)
+
+            # Dart / Flutter main
+            elif rel_path.endswith(".dart"):
+                if "void main()" in content or "void main(" in content:
+                    entry_points.append(
+                        EntryPointInfo(
+                            file=rel_path,
+                            type="mobile_application" if "runApp" in content else "application",
+                            confidence=0.95,
+                            reason="Dart / Flutter main function",
+                            evidence=[f"main() in {rel_path}"],
+                        )
+                    )
+                    seen_files.add(rel_path)
+
+            # Python executable script
             elif (parsed and parsed.language == "Python") or rel_path.endswith(".py"):
                 if '__name__ == "__main__"' in content.replace("'", '"'):
                     entry_points.append(

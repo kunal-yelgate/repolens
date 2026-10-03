@@ -24,6 +24,8 @@ Create a `.env` file from `.env.example` and configure the following variables:
 | `REPOLENS_LLM_PROVIDER` | Required | `src/repolens/config/loader.py` |
 | `REPOLENS_MODEL` | Required | `src/repolens/config/loader.py` |
 | `REPOLENS_PROVIDER` | Required | `src/repolens/config/loader.py` |
+| `no_ai` | Required | `src/repolens/config/loader.py` |
+| `output_dir` | Required | `src/repolens/config/loader.py` |
 
 ## 4. Running the Development Server
 **Python**:

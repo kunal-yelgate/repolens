@@ -2,7 +2,7 @@
 
 ## 1. Test Frameworks Detected
 ### pytest
-- **Test Files Detected**: 8
+- **Test Files Detected**: 9
 - **Test Directories**: tests/integration, tests/unit
 
 **Run All Tests:**
