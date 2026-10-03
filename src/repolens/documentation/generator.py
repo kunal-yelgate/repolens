@@ -1,0 +1,353 @@
+"""Comprehensive documentation generator for REPOLENS.md, ARCHITECTURE.md, SETUP.md, TESTING.md, API.md, and ONBOARDING.md."""
+
+from datetime import datetime
+from pathlib import Path
+from typing import Dict, List
+
+from repolens.analysis.orchestrator import AnalysisResult
+from repolens.utils.filesystem import ensure_dir, safe_write_text
+
+
+class DocumentationGenerator:
+    """Generates clean, structured, non-hallucinatory markdown documentation."""
+
+    def __init__(self, output_dir: Path) -> None:
+        self.output_dir = output_dir.resolve()
+
+    def generate_all(self, result: AnalysisResult) -> Dict[str, Path]:
+        ensure_dir(self.output_dir)
+        generated: Dict[str, Path] = {}
+
+        # 1. REPOLENS.md
+        repolens_md = self._generate_repolens_md(result)
+        repolens_path = self.output_dir / "REPOLENS.md"
+        safe_write_text(repolens_path, repolens_md)
+        generated["REPOLENS.md"] = repolens_path
+
+        # 2. ARCHITECTURE.md
+        arch_md = self._generate_architecture_md(result)
+        arch_path = self.output_dir / "ARCHITECTURE.md"
+        safe_write_text(arch_path, arch_md)
+        generated["ARCHITECTURE.md"] = arch_path
+
+        # 3. SETUP.md
+        setup_md = self._generate_setup_md(result)
+        setup_path = self.output_dir / "SETUP.md"
+        safe_write_text(setup_path, setup_md)
+        generated["SETUP.md"] = setup_path
+
+        # 4. TESTING.md
+        testing_md = self._generate_testing_md(result)
+        testing_path = self.output_dir / "TESTING.md"
+        safe_write_text(testing_path, testing_md)
+        generated["TESTING.md"] = testing_path
+
+        # 5. API.md
+        api_md = self._generate_api_md(result)
+        api_path = self.output_dir / "API.md"
+        safe_write_text(api_path, api_md)
+        generated["API.md"] = api_path
+
+        # 6. ONBOARDING.md
+        onboarding_md = self._generate_onboarding_md(result)
+        onboarding_path = self.output_dir / "ONBOARDING.md"
+        safe_write_text(onboarding_path, onboarding_md)
+        generated["ONBOARDING.md"] = onboarding_path
+
+        return generated
+
+    def _generate_repolens_md(self, res: AnalysisResult) -> str:
+        repo = res.repository
+        commands = res.commands
+
+        lines = [
+            f"# {repo.name} — Codebase Intelligence",
+            "",
+            "> Generated automatically by **RepoLens** autonomous codebase analysis agent.",
+            "",
+            "## 1. Project Overview",
+            f"- **Project Name**: `{repo.name}`",
+            f"- **Type**: {', '.join(repo.project_types)}",
+            f"- **Files**: {repo.total_files} files ({repo.total_lines} total lines of code)",
+            f"- **Git Branch**: `{repo.git_branch or 'main'}`" if repo.has_git else "- **Version Control**: Non-git directory",
+            "",
+            "## 2. Technology Stack",
+            "### Languages",
+        ]
+        for lang, pct in repo.languages.items():
+            lines.append(f"- **{lang}**: {pct}%")
+
+        lines.extend(["", "### Frameworks & Libraries"])
+        if repo.frameworks:
+            for fw in repo.frameworks:
+                lines.append(f"- {fw}")
+        else:
+            lines.append("- None detected")
+
+        lines.extend([
+            "",
+            "## 3. Repository Structure",
+            "```text",
+            res.ascii_tree,
+            "```",
+            "",
+            "## 4. High-Level Architecture",
+        ])
+        for a in res.architecture:
+            lines.append(f"- **{a.architecture}** (Confidence: {int(a.confidence * 100)}%)")
+            for ev in a.evidence:
+                lines.append(f"  - Evidence: {ev}")
+
+        lines.extend([
+            "",
+            "```text",
+            res.ascii_architecture,
+            "```",
+            "",
+            "## 5. Main Entry Points",
+        ])
+        for ep in res.entry_points:
+            lines.append(f"- `{ep.file}`: {ep.reason} *(Confidence: {int(ep.confidence * 100)}%)*")
+
+        lines.extend([
+            "",
+            "## 6. Database & Persistence",
+        ])
+        if res.database:
+            for db in res.database:
+                lines.append(f"- **Technology**: `{db.technology}`")
+                if db.orm:
+                    lines.append(f"- **ORM**: `{db.orm}`")
+                if db.models:
+                    lines.append(f"- **Models / Schemas**: {', '.join([f'`{m}`' for m in db.models[:15]])}")
+                if db.migrations_dir:
+                    lines.append(f"- **Migrations Directory**: `{db.migrations_dir}`")
+        else:
+            lines.append("- No explicit database or ORM detected.")
+
+        lines.extend([
+            "",
+            "## 7. Environment Variables",
+        ])
+        if res.environment_variables:
+            for ev in res.environment_variables[:25]:
+                req_str = "Required" if ev.required else "Optional"
+                used_in = ", ".join([f"`{f}`" for f in ev.used_in_files[:3]])
+                lines.append(f"- `{ev.name}` ({req_str}) — Used by: {used_in}")
+        else:
+            lines.append("- No environment variable usage detected.")
+
+        lines.extend([
+            "",
+            "## 8. Setup & Development Commands",
+            "### Install Dependencies",
+        ])
+        for label, cmd in commands.install.items():
+            lines.append(f"**{label}**:\n```bash\n{cmd}\n```")
+
+        lines.extend(["", "### Run Development Server"])
+        for label, cmd in commands.dev.items():
+            lines.append(f"**{label}**:\n```bash\n{cmd}\n```")
+
+        lines.extend(["", "### Run Test Suite"])
+        for label, cmd in commands.test.items():
+            lines.append(f"**{label}**:\n```bash\n{cmd}\n```")
+
+        lines.extend([
+            "",
+            "## 9. CI/CD & Infrastructure",
+            f"- **CI/CD Platform**: {res.cicd.platform}",
+            f"- **Docker Support**: {'Yes' if res.cicd.has_docker else 'No'}",
+            f"- **Docker Compose**: {'Yes' if res.cicd.has_docker_compose else 'No'}",
+            f"- **Kubernetes**: {'Yes' if res.cicd.has_kubernetes else 'No'}",
+            f"- **Terraform**: {'Yes' if res.cicd.has_terraform else 'No'}",
+            "",
+            "## 10. Potential Architectural Concerns",
+        ])
+        if res.architectural_concerns:
+            for c in res.architectural_concerns:
+                lines.append(f"- **{c.title}**: {c.observation} *(Action: {c.suggested_action})*")
+        else:
+            lines.append("- No critical architectural smells detected.")
+
+        lines.extend([
+            "",
+            "## 11. Architecture Diagram",
+            res.mermaid_diagram,
+            "",
+            "---",
+            f"*Analysis generated on {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}*",
+        ])
+        return "\n".join(lines)
+
+    def _generate_architecture_md(self, res: AnalysisResult) -> str:
+        repo = res.repository
+        lines = [
+            f"# Architecture Document — {repo.name}",
+            "",
+            "## 1. High-Level Architecture",
+        ]
+        for a in res.architecture:
+            lines.append(f"### {a.architecture}")
+            lines.append(f"Confidence: **{int(a.confidence * 100)}%**")
+            lines.append("")
+            lines.append("**Evidence:**")
+            for ev in a.evidence:
+                lines.append(f"- {ev}")
+
+        lines.extend([
+            "",
+            "## 2. Visual Architecture Diagram",
+            "### ASCII Diagram",
+            "```text",
+            res.ascii_architecture,
+            "```",
+            "",
+            "### Mermaid Diagram",
+            res.mermaid_diagram,
+            "",
+            "## 3. Entry Points & Control Flow",
+        ])
+        for ep in res.entry_points:
+            lines.append(f"- **`{ep.file}`** ({ep.type}): {ep.reason}")
+
+        lines.extend([
+            "",
+            "## 4. Persistence Architecture",
+        ])
+        if res.database:
+            for db in res.database:
+                lines.append(f"- **Engine**: `{db.technology}`")
+                lines.append(f"- **ORM/Driver**: `{db.orm or 'Direct Driver'}`")
+                lines.append(f"- **Entities**: {', '.join(db.models) if db.models else 'Dynamic models'}")
+        else:
+            lines.append("- Stateless / No dedicated persistent database layer detected.")
+
+        lines.extend([
+            "",
+            "## 5. Potential Architectural Concerns & Smells",
+        ])
+        if res.architectural_concerns:
+            for c in res.architectural_concerns:
+                lines.append(f"### {c.title}")
+                lines.append(f"- **Category**: `{c.category}`")
+                if c.file:
+                    lines.append(f"- **File**: `{c.file}`")
+                lines.append(f"- **Observation**: {c.observation}")
+                lines.append(f"- **Recommendation**: {c.suggested_action}")
+                lines.append("")
+        else:
+            lines.append("- No major architectural violations detected.")
+
+        return "\n".join(lines)
+
+    def _generate_setup_md(self, res: AnalysisResult) -> str:
+        repo = res.repository
+        commands = res.commands
+
+        lines = [
+            f"# Setup & Execution Guide — {repo.name}",
+            "",
+            "## 1. Prerequisites",
+        ]
+        for lang in repo.languages:
+            lines.append(f"- {lang} runtime environment")
+        if res.cicd.has_docker:
+            lines.append("- Docker & Docker Compose (optional / containerized runtime)")
+
+        lines.extend([
+            "",
+            "## 2. Installation Steps",
+        ])
+        step = 1
+        for label, cmd in commands.install.items():
+            lines.append(f"### Step {step}: Install {label} Dependencies")
+            lines.append("```bash")
+            lines.append(cmd)
+            lines.append("```")
+            step += 1
+
+        lines.extend([
+            "",
+            "## 3. Environment Configuration",
+        ])
+        if res.environment_variables:
+            lines.append("Create a `.env` file from `.env.example` and configure the following variables:")
+            lines.append("")
+            lines.append("| Variable Name | Status | Used In |")
+            lines.append("| :--- | :--- | :--- |")
+            for ev in res.environment_variables[:25]:
+                status = "Required" if ev.required else "Optional"
+                files_str = ", ".join(ev.used_in_files[:2])
+                lines.append(f"| `{ev.name}` | {status} | `{files_str}` |")
+        else:
+            lines.append("No special environment variables required.")
+
+        lines.extend([
+            "",
+            "## 4. Running the Development Server",
+        ])
+        for label, cmd in commands.dev.items():
+            lines.append(f"**{label}**:\n```bash\n{cmd}\n```")
+
+        lines.extend([
+            "",
+            "## 5. Verification",
+            "To verify your local setup, run the test suite:",
+        ])
+        for label, cmd in commands.test.items():
+            lines.append(f"```bash\n{cmd}\n```")
+
+        return "\n".join(lines)
+
+    def _generate_testing_md(self, res: AnalysisResult) -> str:
+        repo = res.repository
+        lines = [
+            f"# Testing Guide — {repo.name}",
+            "",
+            "## 1. Test Frameworks Detected",
+        ]
+        if res.testing:
+            for t in res.testing:
+                lines.append(f"### {t.framework}")
+                lines.append(f"- **Test Files Detected**: {t.test_files_count}")
+                lines.append(f"- **Test Directories**: {', '.join(t.test_dirs)}")
+                lines.append("")
+                lines.append("**Run All Tests:**")
+                lines.append(f"```bash\n{t.run_all_command}\n```")
+                lines.append("")
+                lines.append("**Run a Specific Test:**")
+                lines.append(f"```bash\n{t.run_single_command_template}\n```")
+                lines.append("")
+        else:
+            lines.append("- No dedicated automated testing framework detected.")
+
+        return "\n".join(lines)
+
+    def _generate_api_md(self, res: AnalysisResult) -> str:
+        repo = res.repository
+        lines = [
+            f"# API Documentation — {repo.name}",
+            "",
+            f"Total Endpoints Detected: **{len(res.endpoints)}**",
+            "",
+            "| Method | Path | Framework | Handler | Auth Required | Source File |",
+            "| :--- | :--- | :--- | :--- | :---: | :--- |",
+        ]
+        if res.endpoints:
+            for ep in res.endpoints:
+                auth_icon = "✓" if ep.auth_required else "—"
+                lines.append(
+                    f"| `{ep.http_method}` | `{ep.path}` | {ep.framework} | `{ep.handler_name}` | {auth_icon} | `{ep.file_path}:{ep.line_number}` |"
+                )
+        else:
+            lines.append("| — | No explicit HTTP API endpoints detected | — | — | — | — |")
+
+        return "\n".join(lines)
+
+    def _generate_onboarding_md(self, res: AnalysisResult) -> str:
+        from repolens.agents import OnboardingAgent
+        from repolens.ai.factory import NullLLMProvider
+        agent = OnboardingAgent(res, NullLLMProvider())
+        return agent.generate_guide()
+

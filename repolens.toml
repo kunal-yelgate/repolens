@@ -1,0 +1,13 @@
+[project]
+name = "repolens"
+
+[analysis]
+max_file_size = 500000
+max_depth = 15
+
+[ai]
+provider = "ollama"
+model = "mistral"
+
+[security]
+scan_secrets = true
