@@ -70,8 +70,8 @@ def run_analyze(
     orchestrator = AnalysisOrchestrator(config)
     result = orchestrator.analyze()
 
-    # Generate documentation files
-    doc_out_dir = output or target_root
+    # Generate documentation files – always inside .repolens/docs/ for project cleanliness
+    doc_out_dir = Path(output) if output else (target_root / ".repolens" / "docs")
     doc_gen = DocumentationGenerator(doc_out_dir)
     generated_files = doc_gen.generate_all(result)
 
