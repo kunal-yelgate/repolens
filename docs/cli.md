@@ -16,9 +16,16 @@ repolens analyze [OPTIONS]
 - `--no-ai`: Run pure deterministic static analysis.
 - `--llm [ollama|openai|anthropic|gemini|groq]`: Select AI provider.
 - `--model, -m TEXT`: Specify model name.
+- `--max-file-size BYTES`: Maximum size of an individual file to parse and analyze (defaults to `analysis.max_file_size` in `repolens.toml`).
+- `--depth, -d INTEGER`: Maximum directory traversal depth (defaults to `analysis.max_depth` in `repolens.toml`).
 - `--incremental, -i`: Enable hash-based incremental analysis.
 - `--json`: Output as structured JSON.
 - `--verbose, -v`: Show detailed debug logs.
+
+Files larger than the configured size remain in the repository inventory but are
+not read for line counts, hashes, or parsing. The terminal summary and JSON output
+report how many files were skipped. Raise `analysis.max_file_size` in
+`repolens.toml`, or pass `--max-file-size`, when those files need analysis.
 
 ## `repolens doctor`
 Checks toolchains, runtimes, dependencies, and environment variable requirements.

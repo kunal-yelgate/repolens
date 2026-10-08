@@ -34,9 +34,9 @@ class CacheManager:
             "files": {
                 rel_path: {
                     "hash": inventory.files[rel_path].content_hash,
-                    "parsed": parsed_sources[rel_path].model_dump() if rel_path in parsed_sources else None,
+                    "parsed": parsed.model_dump(),
                 }
-                for rel_path in inventory.files
+                for rel_path, parsed in parsed_sources.items()
             },
         }
         safe_write_text(self.index_file, json.dumps(data, indent=2))

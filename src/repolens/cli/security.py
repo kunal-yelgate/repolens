@@ -6,6 +6,7 @@ import typer
 from rich.table import Table
 
 from repolens.analysis.orchestrator import AnalysisOrchestrator
+from repolens.cli.common import run_analysis_with_progress
 from repolens.config.loader import load_config
 from repolens.documentation.generator import DocumentationGenerator
 from repolens.utils.filesystem import safe_write_text
@@ -30,7 +31,7 @@ def run_security_cmd(
     config = load_config(root_dir=path)
 
     orchestrator = AnalysisOrchestrator(config)
-    result = orchestrator.analyze()
+    result = run_analysis_with_progress(orchestrator)
 
     console.print("\n[bold cyan]RepoLens Security Scan[/bold cyan]\n")
 
@@ -68,7 +69,7 @@ def run_api_cmd(
     config = load_config(root_dir=path)
 
     orchestrator = AnalysisOrchestrator(config)
-    result = orchestrator.analyze()
+    result = run_analysis_with_progress(orchestrator)
 
     console.print("\n[bold cyan]Discovered API Endpoints[/bold cyan]\n")
 
@@ -202,7 +203,7 @@ def run_onboarding_cmd(
     config = load_config(root_dir=path)
 
     orchestrator = AnalysisOrchestrator(config)
-    result = orchestrator.analyze()
+    result = run_analysis_with_progress(orchestrator)
 
     doc_out = output or config.project.root.resolve()
     gen = DocumentationGenerator(doc_out)

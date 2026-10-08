@@ -5,6 +5,7 @@ from typing import Annotated, Any, Optional
 import typer
 
 from repolens.analysis.orchestrator import AnalysisOrchestrator
+from repolens.cli.common import run_analysis_with_progress
 from repolens.config.loader import load_config
 from repolens.utils.logging import console, setup_logging
 from repolens.validation.runner import ValidationRunner
@@ -38,7 +39,7 @@ def run_test_cmd(
     test_cmd = command
     if not test_cmd:
         orchestrator = AnalysisOrchestrator(config)
-        result = orchestrator.analyze()
+        result = run_analysis_with_progress(orchestrator)
         if result.testing:
             test_cmd = result.testing[0].run_all_command
         elif result.commands.test:

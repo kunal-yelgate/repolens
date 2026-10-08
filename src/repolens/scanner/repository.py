@@ -1,7 +1,7 @@
 """High-level repository scanner and structure generator."""
 
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 from repolens.config.models import AnalysisConfig, RepoLensConfig
 from repolens.scanner.files import scan_directory_tree
@@ -22,7 +22,9 @@ class RepositoryScanner:
             custom_excludes=config.analysis.exclude_patterns,
         )
 
-    def scan(self) -> RepositoryInventory:
+    def scan(
+        self, progress_callback: Optional[Callable[[str], None]] = None
+    ) -> RepositoryInventory:
         """Scan repository and return inventory."""
         log_debug(f"Scanning repository at {self.root}")
         inventory = scan_directory_tree(
@@ -30,9 +32,12 @@ class RepositoryScanner:
             ignore_filter=self.ignore_filter,
             max_file_size=self.config.analysis.max_file_size,
             max_depth=self.config.analysis.max_depth,
+            progress_callback=progress_callback,
         )
         log_info(
-            f"Scanned {inventory.total_files} files across {inventory.total_directories} directories ({inventory.total_lines} lines of code)"
+            f"Scanned {inventory.total_files:,} files across {inventory.total_directories:,} "
+            f"directories ({inventory.total_lines:,} analyzed lines; "
+            f"{inventory.skipped_large_files:,} oversized files skipped)"
         )
         return inventory
 
@@ -56,6 +61,10 @@ class RepositoryScanner:
             [d for d in inventory.directories.keys() if d != "."],
             key=lambda d: (len(d.split("/")), d)
         )
+        dir_to_subdirs: Dict[str, List[str]] = {}
+        for directory in all_dirs:
+            parent, _, _ = directory.rpartition("/")
+            dir_to_subdirs.setdefault(parent, []).append(directory)
 
         # Top level files
         root_files = dir_to_files.get("", [])
@@ -75,7 +84,7 @@ class RepositoryScanner:
 
             # Show subdirectories/files inside top dir
             sub_files = dir_to_files.get(d, [])
-            sub_dirs = [sd for sd in all_dirs if sd.startswith(f"{d}/") and sd.count("/") == 1]
+            sub_dirs = dir_to_subdirs.get(d, [])
 
             displayed_items = 0
             for sd in sub_dirs:

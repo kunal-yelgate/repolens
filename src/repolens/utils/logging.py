@@ -29,8 +29,8 @@ custom_theme = Theme(
     }
 )
 
-console = Console(theme=custom_theme, force_terminal=True, legacy_windows=False)
-error_console = Console(theme=custom_theme, stderr=True, force_terminal=True, legacy_windows=False)
+console = Console(theme=custom_theme, legacy_windows=False)
+error_console = Console(theme=custom_theme, stderr=True, legacy_windows=False)
 
 
 logger = logging.getLogger("repolens")
@@ -43,7 +43,7 @@ def setup_logging(verbose: bool = False) -> None:
     logger.handlers.clear()
 
     handler = RichHandler(
-        console=console,
+        console=error_console,
         show_time=verbose,
         show_path=verbose,
         markup=True,

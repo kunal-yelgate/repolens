@@ -1,7 +1,7 @@
 """Main application orchestrator coordinating scanning, parsing, graph, and detection."""
 
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 from pydantic import BaseModel, Field
 
 from repolens.analysis.context import StructuredCodebaseContext
@@ -28,7 +28,7 @@ from repolens.detectors.problems import ArchitecturalProblemsDetector
 from repolens.detectors.project_type import ProjectTypeDetector
 from repolens.detectors.testing import TestingDetector
 from repolens.graph.architecture import ArchitectureDiagramGenerator
-from repolens.graph.builder import KnowledgeGraph, KnowledgeGraphBuilder
+from repolens.graph.builder import KnowledgeGraphBuilder
 from repolens.parsers import get_parser_for_file
 from repolens.parsers.base import ParsedSource
 from repolens.scanner.metadata import RepositoryInventory
@@ -43,6 +43,10 @@ class RepositoryInfo(BaseModel):
     name: str
     total_files: int
     total_lines: int
+    total_directories: int = 0
+    total_size_bytes: int = 0
+    skipped_large_files: int = 0
+    max_file_size: int = 500_000
     languages: Dict[str, float]
     frameworks: List[str]
     project_types: List[str]
@@ -76,45 +80,66 @@ class AnalysisOrchestrator:
         self.config = config
         self.scanner = RepositoryScanner(config)
         self.cache_mgr = CacheManager(config.cache_dir)
+        self.inventory: RepositoryInventory
+        self.parsed_sources: Dict[str, ParsedSource] = {}
 
-    def analyze(self) -> AnalysisResult:
+    def analyze(
+        self, progress_callback: Optional[Callable[[str], None]] = None
+    ) -> AnalysisResult:
         log_info(f"Analyzing repository: {self.config.project.root}")
 
         # 1. Scan filesystem
-        inventory = self.scanner.scan()
+        if progress_callback:
+            progress_callback("Scanning repository files...")
+        inventory = self.scanner.scan(progress_callback=progress_callback)
+        self.inventory = inventory
         tree_str = self.scanner.generate_smart_tree(inventory)
 
         # 2. Parse source files with caching
         parsed_sources: Dict[str, ParsedSource] = {}
-        for rel_path, fmeta in inventory.files.items():
-            if fmeta.is_binary:
-                continue
-
-            # Check incremental cache
+        analyzable_files = [
+            (rel_path, fmeta)
+            for rel_path, fmeta in inventory.files.items()
+            if not fmeta.is_binary and fmeta.size_bytes <= self.config.analysis.max_file_size
+        ]
+        if progress_callback:
+            progress_callback(f"Parsing source files (0/{len(analyzable_files):,})...")
+        for index, (rel_path, fmeta) in enumerate(analyzable_files, start=1):
+            cached = None
             if self.config.analysis.incremental:
                 cached = self.cache_mgr.get_cached_parsed_source(rel_path, fmeta.content_hash)
-                if cached:
-                    parsed_sources[rel_path] = cached
-                    continue
-
-            # Parse fresh
-            content = read_file_safely(fmeta.full_path)
-            if content is not None:
-                parser = get_parser_for_file(fmeta.full_path)
-                try:
-                    parsed = parser.parse(fmeta.full_path, content, rel_path)
-                    parsed_sources[rel_path] = parsed
-                except Exception as e:
-                    log_debug(f"Failed to parse {rel_path}: {e}")
+            if cached:
+                parsed_sources[rel_path] = cached
+            else:
+                content = read_file_safely(
+                    fmeta.full_path, max_size=self.config.analysis.max_file_size
+                )
+                if content is not None:
+                    parser = get_parser_for_file(fmeta.full_path)
+                    try:
+                        parsed = parser.parse(fmeta.full_path, content, rel_path)
+                        parsed_sources[rel_path] = parsed
+                    except Exception as e:
+                        log_debug(f"Failed to parse {rel_path}: {e}")
+            if progress_callback and index % 100 == 0:
+                progress_callback(
+                    f"Parsing source files ({index:,}/{len(analyzable_files):,})..."
+                )
 
         # Save cache
         self.cache_mgr.save(parsed_sources, inventory)
+        self.parsed_sources = parsed_sources
 
         # 3. Build Knowledge Graph
+        if progress_callback:
+            progress_callback("Building the dependency graph...")
         kg_builder = KnowledgeGraphBuilder()
         knowledge_graph = kg_builder.build(inventory, parsed_sources)
+        self.knowledge_graph = knowledge_graph
 
         # 4. Run Detectors
+        if progress_callback:
+            progress_callback("Detecting frameworks, routes, tests, and configuration...")
         languages = LanguageDetector().detect(inventory, parsed_sources)
         frameworks = FrameworkDetector().detect(inventory, parsed_sources)
         project_types = ProjectTypeDetector().detect(inventory, parsed_sources)
@@ -131,6 +156,8 @@ class AnalysisOrchestrator:
         # 5. Run Security Scanner if enabled
         security_findings: List[SecurityFinding] = []
         if self.config.security.scan_secrets or self.config.security.scan_vulnerabilities:
+            if progress_callback:
+                progress_callback("Checking source files for security findings...")
             security_findings = SecurityScanner().scan(inventory, parsed_sources)
 
         # 6. Infer High-Level Architecture
@@ -225,6 +252,10 @@ class AnalysisOrchestrator:
             name=inventory.name,
             total_files=inventory.total_files,
             total_lines=inventory.total_lines,
+            total_directories=inventory.total_directories,
+            total_size_bytes=inventory.total_size_bytes,
+            skipped_large_files=inventory.skipped_large_files,
+            max_file_size=self.config.analysis.max_file_size,
             languages=languages,
             frameworks=frameworks,
             project_types=project_types,

@@ -32,9 +32,11 @@ class CodebaseRanker:
         self,
         inventory: RepositoryInventory,
         parsed_sources: Dict[str, ParsedSource],
+        max_file_size: int = 500_000,
     ) -> None:
         self.inventory = inventory
         self.parsed_sources = parsed_sources
+        self.max_file_size = max_file_size
 
     def search(self, query: str, top_k: int = 10) -> List[SearchResult]:
         raw_terms = [t.lower() for t in re.split(r'[\s_\-/,.]+', query) if len(t) >= 2]
@@ -95,7 +97,11 @@ class CodebaseRanker:
                             best_line = fn.line_number
 
             # 3. Text content scanning
-            content = read_file_safely(fmeta.full_path)
+            content = None
+            if fmeta.size_bytes <= self.max_file_size:
+                content = read_file_safely(
+                    fmeta.full_path, max_size=self.max_file_size
+                )
             if content:
                 lines = content.splitlines()
                 for idx, line in enumerate(lines[:500]):

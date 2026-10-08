@@ -115,6 +115,8 @@ def load_config(
             analysis_dict["incremental"] = clean_overrides["incremental"]
         if clean_overrides.get("depth") is not None:
             analysis_dict["max_depth"] = clean_overrides["depth"]
+        if clean_overrides.get("max_file_size") is not None:
+            analysis_dict["max_file_size"] = clean_overrides["max_file_size"]
 
     project = ProjectConfig(**project_dict)
     analysis = AnalysisConfig(**analysis_dict)

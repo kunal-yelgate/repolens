@@ -9,6 +9,7 @@ from repolens.agents.question import QuestionAgent
 from repolens.ai.factory import get_llm_provider
 from repolens.analysis.orchestrator import AnalysisOrchestrator
 from repolens.analysis.ranking import CodebaseRanker
+from repolens.cli.common import run_analysis_with_progress
 from repolens.config.loader import load_config
 from repolens.utils.logging import console, setup_logging
 
@@ -35,11 +36,12 @@ def run_ask_cmd(
     config = load_config(root_dir=path, cli_overrides={"no_ai": no_ai})
 
     orchestrator = AnalysisOrchestrator(config)
-    result = orchestrator.analyze()
+    result = run_analysis_with_progress(orchestrator)
 
     ranker = CodebaseRanker(
-        inventory=orchestrator.scanner.scan(),
-        parsed_sources={},
+        inventory=orchestrator.inventory,
+        parsed_sources=orchestrator.parsed_sources,
+        max_file_size=config.analysis.max_file_size,
     )
     llm = get_llm_provider(config.ai)
 
@@ -67,7 +69,7 @@ def run_explain_cmd(
     config = load_config(root_dir=path, cli_overrides={"no_ai": no_ai})
 
     orchestrator = AnalysisOrchestrator(config)
-    result = orchestrator.analyze()
+    result = run_analysis_with_progress(orchestrator)
 
     llm = get_llm_provider(config.ai)
     agent = ArchitectureAgent(analysis_result=result, llm=llm)
@@ -94,10 +96,13 @@ def run_find_cmd(
     config = load_config(root_dir=path)
 
     orchestrator = AnalysisOrchestrator(config)
-    result = orchestrator.analyze()
+    run_analysis_with_progress(orchestrator)
 
-    inventory = orchestrator.scanner.scan()
-    ranker = CodebaseRanker(inventory=inventory, parsed_sources={})
+    ranker = CodebaseRanker(
+        inventory=orchestrator.inventory,
+        parsed_sources=orchestrator.parsed_sources,
+        max_file_size=config.analysis.max_file_size,
+    )
     hits = ranker.search(query=term, top_k=top_k)
 
     console.print(f"\n[bold cyan]Codebase Search Results for:[/bold cyan] '{term}'\n")

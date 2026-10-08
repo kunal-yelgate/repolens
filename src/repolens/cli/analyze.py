@@ -2,6 +2,7 @@
 
 import json
 from pathlib import Path
+import sys
 from typing import Annotated, Any, Optional
 import typer
 from rich.panel import Panel
@@ -9,6 +10,7 @@ from rich.table import Table
 
 from repolens.ai.factory import get_llm_provider
 from repolens.analysis.orchestrator import AnalysisOrchestrator
+from repolens.cli.common import run_analysis_with_progress
 from repolens.config.loader import load_config
 from repolens.documentation.generator import DocumentationGenerator
 from repolens.utils.logging import console, setup_logging
@@ -27,7 +29,11 @@ def run_analyze(
     no_ai: Annotated[bool, typer.Option("--no-ai", help="Disable AI reasoning and run deterministic static analysis only")] = False,
     llm: Annotated[Optional[str], typer.Option("--llm", help="AI provider (ollama, openai, anthropic, gemini, groq)")] = None,
     model: Annotated[Optional[str], typer.Option("--model", "-m", help="Model name to use")] = None,
-    depth: Annotated[int, typer.Option("--depth", "-d", help="Maximum directory traversal depth")] = 15,
+    depth: Annotated[Optional[int], typer.Option("--depth", "-d", help="Maximum directory traversal depth")] = None,
+    max_file_size: Annotated[
+        Optional[int],
+        typer.Option("--max-file-size", help="Maximum file size to analyze, in bytes"),
+    ] = None,
     incremental: Annotated[bool, typer.Option("--incremental", "-i", help="Enable incremental caching")] = False,
     json_output: Annotated[bool, typer.Option("--json", help="Output results as JSON")] = False,
     verbose: Annotated[bool, typer.Option("--verbose", "-v", help="Show verbose debug logs")] = False,
@@ -40,7 +46,8 @@ def run_analyze(
     no_ai = bool(_unwrap(no_ai))
     llm = _unwrap(llm)
     model = _unwrap(model)
-    depth = int(_unwrap(depth) or 15)
+    depth = _unwrap(depth)
+    max_file_size = _unwrap(max_file_size)
     incremental = bool(_unwrap(incremental))
     json_output = bool(_unwrap(json_output))
     verbose = bool(_unwrap(verbose))
@@ -55,6 +62,7 @@ def run_analyze(
         "provider": llm,
         "model": model,
         "depth": depth,
+        "max_file_size": max_file_size,
         "incremental": incremental,
     }
 
@@ -64,11 +72,10 @@ def run_analyze(
     if not json_output and format_opt != "json":
         console.print("[brand]RepoLens[/brand]\n[dim]Autonomous Codebase Intelligence Agent[/dim]\n")
         console.print(f"[bold]Repository:[/bold] {target_root}\n")
-        console.print("[dim]Scanning repository...[/dim]\n")
 
     # Run analysis orchestrator
     orchestrator = AnalysisOrchestrator(config)
-    result = orchestrator.analyze()
+    result = run_analysis_with_progress(orchestrator)
 
     # Generate documentation files – always inside .repolens/docs/ for project cleanliness
     doc_out_dir = Path(output) if output else (target_root / ".repolens" / "docs")
@@ -80,6 +87,12 @@ def run_analyze(
         json_data = {
             "project": result.repository.name,
             "root": result.repository.root,
+            "total_files": result.repository.total_files,
+            "total_directories": result.repository.total_directories,
+            "total_lines": result.repository.total_lines,
+            "total_size_bytes": result.repository.total_size_bytes,
+            "skipped_large_files": result.repository.skipped_large_files,
+            "max_file_size": result.repository.max_file_size,
             "languages": result.repository.languages,
             "frameworks": result.repository.frameworks,
             "project_types": result.repository.project_types,
@@ -96,7 +109,7 @@ def run_analyze(
             "architectural_concerns": [c.model_dump() for c in result.architectural_concerns],
             "generated_files": [str(p) for p in generated_files.values()],
         }
-        console.print(json.dumps(json_data, indent=2))
+        sys.stdout.write(json.dumps(json_data, indent=2) + "\n")
         return
 
     # Render beautiful Rich Terminal Output
@@ -104,6 +117,18 @@ def run_analyze(
     console.print(f"[green]✓[/green] Languages detected: {', '.join(result.repository.languages.keys())}")
     console.print(f"[green]✓[/green] Frameworks detected: {', '.join(result.repository.frameworks) if result.repository.frameworks else 'None'}")
     console.print(f"[green]✓[/green] Dependencies analyzed ({result.repository.total_files} files)")
+    console.print(
+        f"[green]✓[/green] Repository size: "
+        f"{result.repository.total_directories:,} directories, "
+        f"{result.repository.total_size_bytes:,} bytes, "
+        f"{result.repository.total_lines:,} analyzed lines"
+    )
+    if result.repository.skipped_large_files:
+        console.print(
+            f"[yellow]![/yellow] Skipped {result.repository.skipped_large_files:,} "
+            f"files larger than {result.repository.max_file_size:,} bytes "
+            "(raise analysis.max_file_size in repolens.toml or pass --max-file-size)"
+        )
     console.print(f"[green]✓[/green] Entry points detected ({len(result.entry_points)} entry points)")
     console.print(f"[green]✓[/green] Configuration analyzed ({len(result.environment_variables)} env vars)")
     console.print(f"[green]✓[/green] Architecture reconstructed ({', '.join([a.architecture for a in result.architecture])})")

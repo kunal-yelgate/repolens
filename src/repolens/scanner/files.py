@@ -3,15 +3,14 @@
 import hashlib
 import os
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Callable, Dict, List, Optional, Set
 
 from repolens.scanner.ignore import IgnoreFilter
 from repolens.scanner.metadata import DirectoryMetadata, FileMetadata, RepositoryInventory
 from repolens.utils.filesystem import (
-    count_lines,
+    BINARY_EXTENSIONS,
     is_binary_file,
     normalize_relpath,
-    read_file_safely,
 )
 
 # Known manifest filenames
@@ -79,23 +78,12 @@ def is_doc_file(filename: str, ext: str) -> bool:
     return False
 
 
-def compute_file_hash(path: Path) -> str:
-    """Compute sha256 hash of file content."""
-    try:
-        hasher = hashlib.sha256()
-        with open(path, "rb") as f:
-            for chunk in iter(lambda: f.read(65536), b""):
-                hasher.update(chunk)
-        return hasher.hexdigest()[:16]
-    except Exception:
-        return ""
-
-
 def scan_directory_tree(
     root: Path,
     ignore_filter: IgnoreFilter,
     max_file_size: int = 500_000,
     max_depth: int = 15,
+    progress_callback: Optional[Callable[[str], None]] = None,
 ) -> RepositoryInventory:
     """Scan directory recursively and build RepositoryInventory."""
     inventory = RepositoryInventory(root=root, name=root.name)
@@ -117,6 +105,7 @@ def scan_directory_tree(
     total_dirs = 0
     total_lines = 0
     total_size = 0
+    skipped_large_files = 0
 
     for dirpath, dirnames, filenames in os.walk(root):
         current_dir = Path(dirpath)
@@ -157,9 +146,25 @@ def scan_directory_tree(
 
             rel_file_str = normalize_relpath(file_path, root)
             ext = file_path.suffix.lower()
-            binary = is_binary_file(file_path)
-            lines = 0 if binary else count_lines(file_path)
-            fhash = compute_file_hash(file_path)
+            lines = 0
+            fhash = ""
+            if file_size > max_file_size:
+                binary = is_binary_file(file_path)
+            elif ext in BINARY_EXTENSIONS:
+                binary = True
+            else:
+                try:
+                    content = file_path.read_bytes()
+                    binary = b"\x00" in content
+                    if not binary:
+                        try:
+                            text = content.decode("utf-8")
+                        except UnicodeDecodeError:
+                            text = content.decode("latin-1")
+                        lines = sum(1 for line in text.splitlines() if line.strip())
+                        fhash = hashlib.sha256(content).hexdigest()[:16]
+                except (OSError, IOError, PermissionError):
+                    binary = True
 
             filename_lower = filename.lower()
             is_manifest = filename_lower in MANIFEST_NAMES
@@ -190,6 +195,8 @@ def scan_directory_tree(
             total_files += 1
             total_lines += lines
             total_size += file_size
+            if file_size > max_file_size and not binary:
+                skipped_large_files += 1
 
             if is_manifest:
                 inventory.manifest_files.append(rel_file_str)
@@ -200,6 +207,11 @@ def scan_directory_tree(
             if is_test:
                 inventory.test_files.append(rel_file_str)
 
+            if progress_callback and total_files % 250 == 0:
+                progress_callback(
+                    f"Scanning repository: {total_files:,} files in {total_dirs:,} directories"
+                )
+
         inventory.directories[rel_dir_str] = dir_meta
         total_dirs += 1
 
@@ -207,5 +219,11 @@ def scan_directory_tree(
     inventory.total_directories = total_dirs
     inventory.total_lines = total_lines
     inventory.total_size_bytes = total_size
+    inventory.skipped_large_files = skipped_large_files
+
+    if progress_callback:
+        progress_callback(
+            f"Scanned {total_files:,} files in {total_dirs:,} directories"
+        )
 
     return inventory

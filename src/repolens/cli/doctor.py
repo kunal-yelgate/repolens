@@ -10,6 +10,7 @@ from rich.panel import Panel
 
 from repolens.ai.factory import get_llm_provider
 from repolens.analysis.orchestrator import AnalysisOrchestrator
+from repolens.cli.common import run_analysis_with_progress
 from repolens.config.loader import load_config
 from repolens.utils.filesystem import read_file_safely
 from repolens.utils.logging import console, setup_logging
@@ -68,7 +69,7 @@ def run_doctor(
 
     # 5. Check Project analysis & environment variables
     orchestrator = AnalysisOrchestrator(config)
-    result = orchestrator.analyze()
+    result = run_analysis_with_progress(orchestrator)
 
     console.print("[green]✓[/green] Project structure analyzed")
 

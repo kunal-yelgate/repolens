@@ -86,7 +86,17 @@ class DocumentationGenerator:
             "## 1. Project Overview",
             f"- **Project Name**: `{repo.name}`",
             f"- **Type**: {', '.join(repo.project_types)}",
-            f"- **Files**: {repo.total_files} files ({repo.total_lines} total lines of code)",
+            f"- **Files**: {repo.total_files:,} across {repo.total_directories:,} directories",
+            f"- **Repository size**: {repo.total_size_bytes:,} bytes",
+            f"- **Analyzed lines**: {repo.total_lines:,} non-empty lines in files within the size limit",
+            *(
+                [
+                    f"- **Large files skipped**: {repo.skipped_large_files:,} larger than "
+                    f"{repo.max_file_size:,} bytes"
+                ]
+                if repo.skipped_large_files
+                else []
+            ),
             f"- **Git Branch**: `{repo.git_branch or 'main'}`" if repo.has_git else "- **Version Control**: Non-git directory",
             "",
             "## 2. Technology Stack",
@@ -368,4 +378,3 @@ class DocumentationGenerator:
         from repolens.ai.factory import NullLLMProvider
         agent = OnboardingAgent(res, NullLLMProvider())
         return agent.generate_guide()
-

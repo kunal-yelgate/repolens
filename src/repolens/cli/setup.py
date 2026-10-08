@@ -6,6 +6,7 @@ from typing import Annotated, Any, Optional
 import typer
 
 from repolens.analysis.orchestrator import AnalysisOrchestrator
+from repolens.cli.common import run_analysis_with_progress
 from repolens.config.loader import load_config
 from repolens.utils.logging import console, setup_logging
 from repolens.utils.subprocess import SafeCommandRunner
@@ -34,7 +35,7 @@ def run_setup_cmd(
     console.print("\n[bold cyan]RepoLens Setup Assistant[/bold cyan]\n")
 
     orchestrator = AnalysisOrchestrator(config)
-    result = orchestrator.analyze()
+    result = run_analysis_with_progress(orchestrator)
 
     # 1. Runtimes detection
     if "Python" in result.repository.languages:

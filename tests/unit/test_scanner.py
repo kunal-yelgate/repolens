@@ -1,6 +1,7 @@
 """Unit tests for file scanner and repository metadata."""
 
 from pathlib import Path
+from repolens.analysis.orchestrator import AnalysisOrchestrator
 from repolens.config.models import RepoLensConfig
 from repolens.scanner.files import is_entrypoint_file, is_test_file, scan_directory_tree
 from repolens.scanner.ignore import IgnoreFilter
@@ -38,3 +39,44 @@ def test_scan_directory_tree(tmp_path: Path) -> None:
     assert "src/main.py" in inv.files
     assert "package.json" in inv.manifest_files
     assert "tests/test_main.py" in inv.test_files
+
+
+def test_large_files_are_inventoried_without_reading_content(tmp_path: Path) -> None:
+    small_file = tmp_path / "small.py"
+    small_file.write_text("print('small')\n", encoding="utf-8")
+    large_file = tmp_path / "large.py"
+    large_file.write_text("print('large')\n" * 20, encoding="utf-8")
+
+    progress_updates = []
+    inventory = scan_directory_tree(
+        root=tmp_path,
+        ignore_filter=IgnoreFilter(root=tmp_path),
+        max_file_size=20,
+        progress_callback=progress_updates.append,
+    )
+
+    assert inventory.total_files == 2
+    assert inventory.skipped_large_files == 1
+    assert inventory.files["large.py"].lines_count == 0
+    assert inventory.files["large.py"].content_hash == ""
+    assert inventory.files["small.py"].lines_count == 1
+    assert inventory.files["small.py"].content_hash
+    assert progress_updates[-1] == "Scanned 2 files in 1 directories"
+
+
+def test_analysis_skips_large_files_and_reports_them(tmp_path: Path) -> None:
+    (tmp_path / "small.py").write_text("def small():\n    return 1\n", encoding="utf-8")
+    (tmp_path / "large.py").write_text(
+        "def large():\n    return 2\n" * 20, encoding="utf-8"
+    )
+    config = RepoLensConfig()
+    config.project.root = tmp_path
+    config.analysis.max_file_size = 32
+    config.cache_dir = tmp_path / ".repolens"
+
+    orchestrator = AnalysisOrchestrator(config)
+    result = orchestrator.analyze()
+
+    assert result.repository.skipped_large_files == 1
+    assert "small.py" in orchestrator.parsed_sources
+    assert "large.py" not in orchestrator.parsed_sources

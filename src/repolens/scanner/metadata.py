@@ -37,6 +37,7 @@ class RepositoryInventory(BaseModel):
     total_directories: int = 0
     total_lines: int = 0
     total_size_bytes: int = 0
+    skipped_large_files: int = 0
     files: Dict[str, FileMetadata] = Field(default_factory=dict)
     directories: Dict[str, DirectoryMetadata] = Field(default_factory=dict)
     manifest_files: List[str] = Field(default_factory=list)

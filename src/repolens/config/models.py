@@ -12,8 +12,8 @@ class ProjectConfig(BaseModel):
 
 
 class AnalysisConfig(BaseModel):
-    max_file_size: int = 500_000  # 500 KB
-    max_depth: int = 15
+    max_file_size: int = Field(default=500_000, gt=0)  # 500 KB
+    max_depth: int = Field(default=15, ge=0)
     include_patterns: List[str] = Field(default_factory=list)
     exclude_patterns: List[str] = Field(default_factory=list)
     token_budget: int = 8000

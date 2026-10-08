@@ -183,6 +183,13 @@ Navigate to any project directory and execute:
 repolens analyze
 ```
 
+Large repositories are scanned with file-size and depth limits, and RepoLens shows
+live progress while it works. Files above `analysis.max_file_size` remain visible
+in the inventory but are not loaded for parsing; the result reports how many were
+skipped. Adjust `analysis.max_file_size` / `analysis.max_depth` in `repolens.toml`,
+or use `repolens analyze --max-file-size 1000000 --depth 25` to include larger or
+more deeply nested source files.
+
 ---
 
 ## 🦙 Local AI Setup with Ollama (Mistral)
