@@ -76,6 +76,14 @@ venv.bak/
 tmp/
 temp/
 
+# Next.js website
+web/node_modules/
+web/.next/
+web/out/
+web/coverage/
+web/tsconfig.tsbuildinfo
+
+
 # IDE & OS files
 .vscode/
 .idea/
