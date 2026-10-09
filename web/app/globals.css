@@ -25,9 +25,7 @@ button { font: inherit; }
 .page-shell { width: min(1160px, calc(100% - 64px)); margin-inline: auto; }
 .site-header { height: 76px; padding: 0 max(32px, calc((100vw - 1250px) / 2)); display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 20; background: rgba(16, 19, 17, 0.88); border-bottom: 1px solid var(--line); backdrop-filter: blur(18px); }
 .brand { display: inline-flex; align-items: center; gap: 9px; color: #e9eee9; font: 700 19px var(--display); letter-spacing: -0.8px; }
-.brand-mark { display: grid; place-items: center; width: 34px; height: 34px; border: 1px solid rgba(187, 242, 120, 0.35); background: rgba(187, 242, 120, 0.08); border-radius: 10px; color: var(--green); }
-.brand-mark svg { width: 24px; height: 24px; }
-.brand-accent { color: var(--green); }
+.brand-logo { display: block; width: 48px; height: 48px; object-fit: contain; }
 .main-nav { display: flex; gap: 34px; align-items: center; color: #aab2ab; font-size: 13px; }
 .main-nav a, .site-footer a { transition: color 160ms ease; }
 .main-nav a:hover, .site-footer a:hover { color: var(--green); }
@@ -153,7 +151,7 @@ button { font: inherit; }
 .cta-actions { justify-content: center; }
 .cta-orb { position: absolute; width: 230px; height: 230px; left: calc(50% - 115px); bottom: -180px; border-radius: 50%; background: rgba(187, 242, 120, .22); filter: blur(70px); }
 .site-footer { min-height: 76px; display: flex; justify-content: space-between; align-items: center; gap: 20px; border-top: 1px solid var(--line); color: #849087; font-size: 10px; }
-.site-footer .brand { color: var(--text); font-size: 15px; }.site-footer .brand-mark { width: 29px; height: 29px; }.site-footer .brand-mark svg { width: 20px; }
+.site-footer .brand { color: var(--text); font-size: 15px; }.site-footer .brand-logo { width: 40px; height: 40px; }
 .site-footer > div { display: flex; gap: 20px; }
 
 /* Documentation */

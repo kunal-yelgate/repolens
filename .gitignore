@@ -82,6 +82,7 @@ web/.next/
 web/out/
 web/coverage/
 web/tsconfig.tsbuildinfo
+.vercel/
 
 
 # IDE & OS files

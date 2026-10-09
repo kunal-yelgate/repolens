@@ -1,6 +1,8 @@
 <div align="center">
 
-# 🔍 RepoLens
+<img src="web/public/repolens-logo.png" alt="RepoLens logo" width="180" />
+
+# RepoLens
 
 ### **Autonomous Codebase Intelligence & Architecture Agent**
 

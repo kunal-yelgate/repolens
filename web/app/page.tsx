@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import CopyCommand from "./components/CopyCommand";
 import SiteHeader from "./components/SiteHeader";
@@ -340,13 +341,14 @@ export default function Home() {
       </main>
       <footer className="site-footer page-shell">
         <Link aria-label="RepoLens home" className="brand" href="/">
-          <span aria-hidden="true" className="brand-mark">
-            <svg viewBox="0 0 36 36" fill="none">
-              <path d="M5 25.5 13.6 17l5.2 5.1L30.5 10" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.4" />
-              <path d="M22.7 10h7.8v7.8" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.4" />
-            </svg>
-          </span>
-          <span>repo<span className="brand-accent">lens</span></span>
+          <Image
+            alt=""
+            aria-hidden="true"
+            className="brand-logo"
+            height={32}
+            src="/repolens-logo.png"
+            width={32}
+          />
         </Link>
         <span>Understand the code. Ship with context.</span>
         <div>

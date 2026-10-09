@@ -8,6 +8,9 @@ export const metadata: Metadata = {
   },
   description:
     "Map an unfamiliar repository in minutes. RepoLens turns source code into a traceable architecture guide, dependency graph, and practical onboarding docs.",
+  icons: {
+    icon: "/repolens-logo.png",
+  },
   openGraph: {
     title: "RepoLens — See the shape of any codebase",
     description:
